@@ -69,6 +69,16 @@ config MTD_BLOCK_RO
 	  You do not need this option for use with the DiskOnChip devices. For
 	  those, enable NFTL support (CONFIG_NFTL) instead.
 
+config MTD_TEGRA_VIRT
+        tristate "Support Tegra Virtual MTD devices"
+        depends on MTD_OF_PARTS
+        help
+          Adds support for Virtual MTD devices based on Tegra virtualization
+          framework.
+
+          This will cause virtual MTD device driver to be built to work with
+          physical MTD devices in the backend.
+
 comment "Note that in some cases UBI block is preferred. See MTD_UBI_BLOCK."
 	depends on MTD_BLOCK || MTD_BLOCK_RO
 

@@ -29,6 +29,13 @@ config EXTCON_AXP288
 	  Say Y here to enable support for USB peripheral detection
 	  and USB MUX switching by X-Power AXP288 PMIC.
 
+config EXTCON_DISP_STATE
+        tristate "DISPLAY STATE EXTCON support"
+        depends on TEGRA_DC
+        default y
+        help
+           Say Y here to enable display state cable detection with extcon support.
+
 config EXTCON_FSA9480
 	tristate "FSA9480 EXTCON Support"
 	depends on INPUT && I2C

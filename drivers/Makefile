@@ -188,3 +188,11 @@ obj-$(CONFIG_GNSS)		+= gnss/
 obj-$(CONFIG_INTERCONNECT)	+= interconnect/
 obj-$(CONFIG_COUNTER)		+= counter/
 obj-$(CONFIG_MOST)		+= most/
+
+obj-$(CONFIG_RTK_BTUSB)         += bluetooth/realtek/
+obj-$(CONFIG_NVPMODEL_EMC)      += nvpmodel/
+obj-$(CONFIG_TEGRA_NVLINK)      += nvlink/
+obj-$(CONFIG_NVPPS)             += nvpps/
+obj-$(CONFIG_TRUSTY)            += trusty/
+obj-$(CONFIG_TEGRA_HV_MANAGER)  += virt/tegra/
+

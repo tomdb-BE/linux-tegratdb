@@ -107,6 +107,17 @@ obj-$(CONFIG_I2C_SUN6I_P2WI)	+= i2c-sun6i-p2wi.o
 obj-$(CONFIG_I2C_SYNQUACER)	+= i2c-synquacer.o
 obj-$(CONFIG_I2C_TEGRA)		+= i2c-tegra.o
 obj-$(CONFIG_I2C_TEGRA_BPMP)	+= i2c-tegra-bpmp.o
+obj-$(CONFIG_I2C_TEGRA_VI)      += i2c-tegra-vi.o
+obj-$(CONFIG_I2C_BPMP_TEGRA)     += i2c-bpmp-tegra.o
+obj-$(CONFIG_I2C_TEGRA_CAMRTC) += i2c-ivc-single.o i2c-ivc-multi.o i2c-rtcpu.o i2c-rtcpu-clk-config.o
+obj-$(CONFIG_I2C_TEGRA_HV)      += i2c-tegra-hv-common.o i2c-tegra-hv.o
+
+ifdef CONFIG_ARCH_TEGRA_19x_SOC
+
+GCOV_PROFILE := y
+obj-$(CONFIG_I2C_TEGRA194_SLAVE) += i2c-tegra194-slave.o
+endif
+
 obj-$(CONFIG_I2C_UNIPHIER)	+= i2c-uniphier.o
 obj-$(CONFIG_I2C_UNIPHIER_F)	+= i2c-uniphier-f.o
 obj-$(CONFIG_I2C_VERSATILE)	+= i2c-versatile.o

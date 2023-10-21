@@ -163,6 +163,13 @@ config BACKLIGHT_ATMEL_LCDC
 	  If in doubt, it's safe to enable this option; it doesn't kick
 	  in unless the board's description says it's wired that way.
 
+config BACKLIGHT_DS1050
+        tristate "Backlight driver for Maxim DS1050"
+        depends on I2C
+        help
+          If you have a DS1050 for backlight, say Y to enable the
+          backlight driver.
+
 config BACKLIGHT_EP93XX
 	tristate "Cirrus EP93xx Backlight Driver"
 	depends on FB_EP93XX

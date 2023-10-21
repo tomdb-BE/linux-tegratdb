@@ -329,6 +329,8 @@ source "drivers/gpu/drm/fsl-dcu/Kconfig"
 
 source "drivers/gpu/drm/tegra/Kconfig"
 
+source "drivers/gpu/drm/tegra_udrm/Kconfig"
+
 source "drivers/gpu/drm/stm/Kconfig"
 
 source "drivers/gpu/drm/panel/Kconfig"

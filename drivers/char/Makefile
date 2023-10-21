@@ -14,6 +14,8 @@ obj-$(CONFIG_IBM_BSR)		+= bsr.o
 
 obj-$(CONFIG_PRINTER)		+= lp.o
 
+obj-$(CONFIG_HMM_DMIRROR)       += hmm_dmirror.o
+
 obj-$(CONFIG_APM_EMULATION)	+= apm-emulation.o
 
 obj-$(CONFIG_DTLK)		+= dtlk.o

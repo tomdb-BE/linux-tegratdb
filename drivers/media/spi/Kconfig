@@ -15,6 +15,17 @@ config VIDEO_GS1662
 	help
 	  Enable the GS1662 driver which serializes video streams.
 
+config VIDEO_IMX204
+        tristate "IMX204 camera sensor support"
+        depends on SPI && VIDEO_V4L2 && VIDEO_V4L2_SUBDEV_API
+        select REGMAP_SPI
+        ---help---
+          This is a Video4Linux2 sensor-level driver for the Sony
+          IMX204 camera sensor
+
+          To compile this driver as a module, choose M here: the module
+          will be called imx204.
+
 endmenu
 
 endif

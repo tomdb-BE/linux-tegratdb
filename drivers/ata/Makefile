@@ -129,3 +129,7 @@ libata-$(CONFIG_SATA_PMP)	+= libata-pmp.o
 libata-$(CONFIG_ATA_ACPI)	+= libata-acpi.o
 libata-$(CONFIG_SATA_ZPODD)	+= libata-zpodd.o
 libata-$(CONFIG_PATA_TIMINGS)	+= libata-pata-timings.o
+
+obj-$(CONFIG_AHCI_TEGRA_DOWNSTREAM)     += tegra/
+obj-$(CONFIG_SATA_AHCI_TEGRA_SHIELD)    += tegra-shield/
+

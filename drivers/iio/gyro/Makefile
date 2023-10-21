@@ -19,10 +19,13 @@ obj-$(CONFIG_FXAS21002C_SPI) += fxas21002c_spi.o
 
 obj-$(CONFIG_HID_SENSOR_GYRO_3D) += hid-sensor-gyro-3d.o
 
+
 # Currently this is rolled into one module, split it if
 # we ever create a separate SPI interface for MPU-3050
 obj-$(CONFIG_MPU3050) += mpu3050.o
 mpu3050-objs := mpu3050-core.o mpu3050-i2c.o
+
+obj-$(CONFIG_NVS_A3G4250D) += nvs_a3g4250d.o
 
 itg3200-y               := itg3200_core.o
 itg3200-$(CONFIG_IIO_BUFFER) += itg3200_buffer.o

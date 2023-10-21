@@ -236,4 +236,21 @@ source "drivers/interconnect/Kconfig"
 source "drivers/counter/Kconfig"
 
 source "drivers/most/Kconfig"
+
+source "drivers/bluetooth/realtek/Kconfig"
+
+source "drivers/misc/tegra186-ahc/Kconfig"
+
+source "drivers/nvpmodel/Kconfig"
+
+source "drivers/nvlink/Kconfig"
+
+source "drivers/nvpps/Kconfig"
+
+source "drivers/trusty/Kconfig"
+
+source "drivers/virt/tegra/Kconfig"
+
+source "drivers/gpu/nvgpu/Kconfig"
+
 endmenu

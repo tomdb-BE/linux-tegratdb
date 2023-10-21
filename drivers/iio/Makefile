@@ -23,6 +23,7 @@ obj-y += chemical/
 obj-y += common/
 obj-y += dac/
 obj-y += dummy/
+obj-y += generic/
 obj-y += gyro/
 obj-y += frequency/
 obj-y += health/

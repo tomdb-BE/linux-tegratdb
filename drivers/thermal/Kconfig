@@ -17,6 +17,43 @@ menuconfig THERMAL
 
 if THERMAL
 
+config PWM_FAN
+        tristate "Tegra PWM Fan driver"
+        depends on THERMAL
+        help
+          Enables the fan driver that is controlled by pwm.
+
+config THERMAL_GOV_PID
+        bool "PID thermal governor"
+        help
+          This governor manages thermals based on output values of
+          PID controller.
+
+config THERMAL_GOV_CONTINUOUS
+        bool "CONTINUOUS thermal governor"
+        help
+          This governor will filter raw temperature with IIR filter ,fetch
+          active pwm table from cdev pwm table and then caculate target pwm
+          value. This will make fan run more quietly and smoothly.
+
+config TEGRA_THERMAL_THROTTLE
+       bool "Enable throttling of CPU speed on overtemp"
+       depends on CPU_FREQ
+       depends on THERMAL
+       help
+         Passive cooling device that throttles clocks using cpufreq and pmqos
+         interfaces.
+
+config USERSPACE_THERM_ALERT
+        tristate "Userspace thermal alert cooling device"
+        depends on THERMAL_OF
+        help
+          Adds cooling device for notifying user space to know whether
+          thermal alert occurred for temperature trip.
+
+          Say 'Y' here if you want to get notification of temperature alert
+          in user space.
+
 config THERMAL_NETLINK
 	bool "Thermal netlink management"
 	depends on NET

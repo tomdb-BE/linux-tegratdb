@@ -1029,6 +1029,12 @@ config PCF50633_GPIO
 	  Say yes here if you want to include support GPIO for pins on
 	  the PCF50633 chip.
 
+config MFD_TMPM32X_I2C
+        tristate
+        depends on I2C
+        depends on OF
+        select MFD_CORE
+
 config UCB1400_CORE
 	tristate "Philips UCB1400 Core driver"
 	depends on AC97_BUS

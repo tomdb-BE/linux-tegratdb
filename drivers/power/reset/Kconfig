@@ -204,6 +204,15 @@ config POWER_RESET_ST
 	help
 	  Reset support for STMicroelectronics boards.
 
+config POWER_OFF_TMPM32X_I2C
+        tristate "Toshiba MCU TMPM32x I2C power off driver"
+        depends on I2C
+        depends on OF
+        select MFD_TMPM32X_I2C
+        help
+          This driver supports an external power off trigger via
+          Toshiba MCU TMPM32x I2C.
+
 config POWER_RESET_TPS65086
 	bool "TPS65086 restart driver"
 	depends on MFD_TPS65086

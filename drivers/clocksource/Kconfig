@@ -83,6 +83,12 @@ config IXP4XX_TIMER
 	help
 	  Enables support for the Intel XScale IXP4xx SoC timer.
 
+config CLK_SRC_TEGRA18_TIMER
+        bool "Clocksource for tegra18 based SOC's"
+        depends on ARCH_TEGRA
+        help
+          This is the tegra18 SOC timer driver.
+
 config ROCKCHIP_TIMER
 	bool "Rockchip timer driver" if COMPILE_TEST
 	depends on ARM || ARM64

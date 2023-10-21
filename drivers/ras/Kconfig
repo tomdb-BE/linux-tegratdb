@@ -33,4 +33,12 @@ if RAS
 
 source "arch/x86/ras/Kconfig"
 
+config ARM64_RAS
+        tristate "ARM64 RAS Handler"
+        depends on ARM64 && RAS
+        default y
+        help
+          This driver adds an interface for handling RAS Correctable
+          Errors per core, per core cluster and per CCPLEX.
+
 endif

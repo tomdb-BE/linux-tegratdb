@@ -25,6 +25,16 @@ config VIDEO_VIA_CAMERA
 #
 # Platform multimedia device configuration
 #
+#
+
+source "drivers/media/platform/tegra/Kconfig"
+
+if V4L_TEST_DRIVERS
+
+source "drivers/media/platform/tegra-vivid/Kconfig"
+
+endif #V4L_TEST_DRIVERS
+
 source "drivers/media/platform/cadence/Kconfig"
 
 source "drivers/media/platform/davinci/Kconfig"

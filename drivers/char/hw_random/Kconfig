@@ -48,6 +48,16 @@ config HW_RANDOM_INTEL
 
 	  If unsure, say Y.
 
+config HW_RANDOM_TEGRA
+       tristate "Tegra Random Number Generator support"
+       depends on HW_RANDOM && CRYPTO_DEV_TEGRA_VIRTUAL_SE_INTERFACE
+       default HW_RANDOM
+       ---help---
+         This driver provides kernel-side support for the Random Number
+         Generator hardware found on tegra.
+
+         If unsure, say N.
+
 config HW_RANDOM_AMD
 	tristate "AMD HW Random Number Generator support"
 	depends on (X86 || PPC_MAPLE) && PCI

@@ -37,3 +37,9 @@ obj-y				+= controller/
 obj-y				+= switch/
 
 subdir-ccflags-$(CONFIG_PCI_DEBUG) := -DDEBUG
+
+ifdef CONFIG_ARCH_TEGRA_19x_SOC
+
+obj-y += ep/
+
+endif

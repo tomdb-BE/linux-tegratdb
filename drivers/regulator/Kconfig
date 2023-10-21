@@ -909,6 +909,14 @@ config REGULATOR_PV88090
 	  Say y here to support the voltage regulators and convertors
 	  on PV88090
 
+config REGULATOR_PMIC_OTP
+        bool "Provide a regulator with PMIC OTP without PMIC registration"
+        help
+          This driver able to provide all regulator interface to client
+          without any actual implementation. This should be used if it
+          is required to use the PMCI OTP configuration and do not want
+          to register PMIC.
+
 config REGULATOR_PWM
 	tristate "PWM voltage regulator"
 	depends on PWM

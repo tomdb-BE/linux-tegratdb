@@ -5,6 +5,19 @@ SUBLEVEL = 0
 EXTRAVERSION =
 NAME = Trick or Treat
 
+# NVIDIA Jetson L4T variables
+
+NV_REPOSITORY_COMPONENTS :=
+
+ifneq ($(NV_BUILD_CONFIGURATION_OS_IS_INTEGRITY),1)
+NV_REPOSITORY_COMPONENTS := drivers/gpu/nvgpu
+NV_REPOSITORY_COMPONENTS += userspace
+NV_REPOSITORY_COMPONENTS += userspace/units/posix-bitops
+NV_REPOSITORY_COMPONENTS += userspace/units/posix-env
+NV_REPOSITORY_COMPONENTS += userspace/units/posix-mockio
+endif
+
+
 # *DOCUMENTATION*
 # To see a list of typical targets execute "make help"
 # More info can be located in ./README

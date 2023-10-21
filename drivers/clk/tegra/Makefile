@@ -29,3 +29,8 @@ obj-$(CONFIG_ARCH_TEGRA_210_SOC)	+= clk-tegra210.o
 obj-$(CONFIG_ARCH_TEGRA_210_SOC)	+= clk-tegra210-emc.o
 obj-$(CONFIG_CLK_TEGRA_BPMP)		+= clk-bpmp.o
 obj-y					+= clk-utils.o
+obj-y					+= clk-nv-bpmp.o
+obj-y					+= clk-tegra-bpmp.o
+obj-y					+= clk-fake.o
+obj-$(CONFIG_TEGRA_AON)			+= tegra-aon-clk.o
+

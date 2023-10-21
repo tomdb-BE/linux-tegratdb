@@ -6,6 +6,13 @@
 
 menu "Accelerometers"
 
+config NVS_AIS328DQ
+        tristate "STMicroelectronics accelerometer AIS328DQ"
+        depends on I2C && IIO_BUFFER && IIO_TRIGGERED_BUFFER && NVS_IIO
+        help
+          Say yes here to build support for STMicroelectronics AIS328DQ
+          accelerometer using NVS (NVidia Sensor framework).
+
 config ADIS16201
 	tristate "Analog Devices ADIS16201 Dual-Axis Digital Inclinometer and Accelerometer"
 	depends on SPI

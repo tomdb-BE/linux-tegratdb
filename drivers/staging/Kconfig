@@ -24,6 +24,14 @@ menuconfig STAGING
 
 if STAGING
 
+source "drivers/staging/ozwpan/Kconfig"
+
+source "drivers/staging/platform/tegra/gte/Kconfig"
+
+source "drivers/staging/platform/tegra/gte_test/Kconfig"
+
+source "drivers/staging/platform/tegra/dummy_carveout/Kconfig"
+
 source "drivers/staging/wlan-ng/Kconfig"
 
 source "drivers/staging/olpc_dcon/Kconfig"
