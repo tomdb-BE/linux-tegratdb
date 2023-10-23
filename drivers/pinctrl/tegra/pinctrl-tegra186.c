@@ -19,7 +19,7 @@
 #include <linux/pinctrl/pinctrl.h>
 #include <linux/pinctrl/pinmux.h>
 
-#include "pinctrl-tegra.h"
+#include "pinctrl-tegra-186.h"
 
 /*
  * Most pins affected by the pinmux can also be GPIOs. Define these first.
