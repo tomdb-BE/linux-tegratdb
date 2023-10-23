@@ -641,6 +641,11 @@ static int cap_debugfs_init(struct tegra_ppm *ctx, struct dentry *parent)
 static int ppm_debugfs_init(struct tegra_ppm *ctx,
 			    struct dentry *parent)
 {
+        struct debugfs_u32_array debugfs_array = {
+                (u32 *)ctx->fv->table,
+                2*ctx->fv->size
+        };
+
 	if (!parent) {
 		parent = ppm_debugfs_dir();
 		if (IS_ERR_OR_NULL(parent))
@@ -661,7 +666,7 @@ static int ppm_debugfs_init(struct tegra_ppm *ctx,
 	debugfs_create_file("ppm_cache", S_IRUSR | S_IWUSR, parent,
 			    ctx, &ppm_cache_fops);
 	debugfs_create_u32_array("vf_lut", S_IRUSR, parent,
-				 (u32 *)ctx->fv->table, 2*ctx->fv->size);
+				 &debugfs_array);
 	debugfs_create_u32("iddq_ma", S_IRUSR, parent,
 			   &ctx->iddq_ma);
 

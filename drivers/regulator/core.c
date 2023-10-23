@@ -4060,7 +4060,7 @@ int regulator_set_sleep_voltage(struct regulator *regulator,
         }
 #endif
 
-        mutex_lock(&rdev->mutex);
+        mutex_lock(&regulator_list_mutex);
 
         /* sanity check */
         if (!rdev->desc->ops->set_sleep_voltage_sel) {
@@ -4096,7 +4096,7 @@ int regulator_set_sleep_voltage(struct regulator *regulator,
                 ret = sel;
         }
 out:
-        mutex_unlock(&rdev->mutex);
+        mutex_unlock(&regulator_list_mutex);
         return ret;
 }
 EXPORT_SYMBOL_GPL(regulator_set_sleep_voltage);
