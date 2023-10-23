@@ -57,11 +57,7 @@ enum {
 					struct compat_saf775x_cmd),
 };
 
-#if IS_ENABLED(CONFIG_COMPAT)
 	long compat_saf775x_hwdep_ioctl(struct file *file,
 		unsigned int cmd, unsigned long arg);
-#else
-	#define compat_saf775x_hwdep_ioctl NULL
-#endif /* CONFIG_COMPAT */
 
 #endif /* __UAPI_COMPAT_SAF775X_IOCTL_H__ */

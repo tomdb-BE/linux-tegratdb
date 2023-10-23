@@ -32,7 +32,6 @@ struct tegra_fb_modedb {
 	__u32 modedb_len;
 };
 
-#ifdef CONFIG_COMPAT
 struct tegra_fb_modedb_compat {
 	__u32 modedb;
 	__u32 modedb_len;
@@ -40,7 +39,6 @@ struct tegra_fb_modedb_compat {
 
 #define FBIO_TEGRA_GET_MODEDB_COMPAT \
 		_IOWR('F', 0x42, struct tegra_fb_modedb_compat)
-#endif
 
 #define FBIO_TEGRA_GET_MODEDB	_IOWR('F', 0x42, struct tegra_fb_modedb)
 
