@@ -20,7 +20,7 @@ ifeq ($(GCC_VER_49),1)
 EXTRA_CFLAGS += -Wno-date-time	# Fix compile error && warning on gcc 4.9 and later
 endif
 
-SOURCETREE = $(srctree.nvidia)/drivers/net/wireless/realtek/rtl8822bu
+SOURCETREE = $(srctree)/drivers/net/wireless/realtek/rtl8822bu
 EXTRA_CFLAGS += -I$(SOURCETREE)/include
 
 EXTRA_LDFLAGS += --strip-debug

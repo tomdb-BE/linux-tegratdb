@@ -1,5 +1,5 @@
 GCOV_PROFILE := y
-ccflags-y += -I$(srctree.nvidia)/drivers/video/tegra/host
+ccflags-y += -I$(srctree)/drivers/video/tegra/host
 ccflags-y += -Idrivers/video/tegra/host
 ccflags-y += -Idrivers/video/tegra/camera
 ccflags-y += -Werror
@@ -19,8 +19,8 @@ endif
 
 ifdef CONFIG_TEGRA_T19X_GRHOST
 
-ccflags-y += -I$(srctree.nvidia)/drivers/media/platform/tegra
-ccflags-y += -I$(srctree.nvidia)/include
+ccflags-y += -I$(srctree)/drivers/media/platform/tegra
+ccflags-y += -I$(srctree)/include
 
 nvhost-isp5-objs = isp5.o
 

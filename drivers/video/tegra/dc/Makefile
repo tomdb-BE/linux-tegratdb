@@ -51,8 +51,8 @@ obj-y += crc.o
 
 GCOV_PROFILE := y
 subdir-ccflags-y := -Werror
-ccflags-y += -I$(srctree.nvidia)/drivers/video/tegra/dc
-ccflags-y += -I$(srctree.nvidia)/drivers/video/tegra/dc/nvdisp
+ccflags-y += -I$(srctree)/drivers/video/tegra/dc
+ccflags-y += -I$(srctree)/drivers/video/tegra/dc/nvdisp
 
 obj-y += sor_t19x.o
 obj-y += nvdisp/

@@ -61,8 +61,8 @@ obj-$(CONFIG_AMLOGIC_THERMAL)     += amlogic_thermal.o
 obj-$(CONFIG_SPRD_THERMAL)	+= sprd_thermal.o
 obj-$(CONFIG_KHADAS_MCU_FAN_THERMAL)	+= khadas_mcu_fan.o
 
-ccflags-y += -I$(srctree.nvidia)/include
-ccflags-y += -I$(srctree.nvidia)/drivers/thermal
+ccflags-y += -I$(srctree)/include
+ccflags-y += -I$(srctree)/drivers/thermal
 ccflags-y += -I$(srctree)/drivers/thermal
 
 thermal_sys-$(CONFIG_THERMAL_GOV_CONTINUOUS) += continuous_thermal_gov.o

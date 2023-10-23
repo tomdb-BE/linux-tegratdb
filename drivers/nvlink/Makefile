@@ -1,4 +1,4 @@
-ccflags-y += 			-I$(srctree.nvidia)/include
+ccflags-y += 			-I$(srctree)/include
 obj-y +=			nvlink-core.o
 obj-y +=			t19x-nvlink-endpt.o
 obj-$(CONFIG_DEBUG_FS) +=	t19x-nvlink-endpt-debugfs.o

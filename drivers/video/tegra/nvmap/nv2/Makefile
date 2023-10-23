@@ -7,8 +7,8 @@ ccflags-y += -Iarch/arm/mach-tegra/include
 endif
 
 ccflags-y += -Iarch/arm/mach-tegra
-ccflags-y += -I$(srctree.nvidia)/drivers/video/tegra/nvmap/
-ccflags-y += -I$(srctree.nvidia)/include/
+ccflags-y += -I$(srctree)/drivers/video/tegra/nvmap/
+ccflags-y += -I$(srctree)/include/
 
 obj-y += nvmap_dev.o
 obj-y += nvmap_fault.o

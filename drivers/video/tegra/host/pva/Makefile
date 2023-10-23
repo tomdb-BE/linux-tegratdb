@@ -1,8 +1,8 @@
 ifdef CONFIG_TEGRA_T19X_GRHOST
 
 GCOV_PROFILE := y
-ccflags-y += -I$(srctree.nvidia)/drivers/video/tegra/host
-ccflags-y += -I$(srctree.nvidia)/include
+ccflags-y += -I$(srctree)/drivers/video/tegra/host
+ccflags-y += -I$(srctree)/include
 ccflags-y += -Werror
 
 nvhost-pva-objs  = \
