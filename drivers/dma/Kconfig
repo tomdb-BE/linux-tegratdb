@@ -202,6 +202,7 @@ config FSL_DMA
 config FSL_EDMA
 	tristate "Freescale eDMA engine support"
 	depends on OF
+	depends on HAS_IOMEM
 	select DMA_ENGINE
 	select DMA_VIRTUAL_CHANNELS
 	help
@@ -236,7 +237,7 @@ config FSL_RAID
 
 config HISI_DMA
 	tristate "HiSilicon DMA Engine support"
-	depends on ARM64 || COMPILE_TEST
+	depends on ARCH_HISI || COMPILE_TEST
 	depends on PCI_MSI
 	select DMA_ENGINE
 	select DMA_VIRTUAL_CHANNELS
@@ -271,6 +272,7 @@ config IMX_SDMA
 
 config INTEL_IDMA64
 	tristate "Intel integrated DMA 64-bit support"
+	depends on HAS_IOMEM
 	select DMA_ENGINE
 	select DMA_VIRTUAL_CHANNELS
 	help
@@ -653,19 +655,6 @@ config TEGRA210_ADMA
 	  (APE). This DMA controller transfers data from memory to
 	  peripheral and vice versa. It does not support memory to
 	  memory data transfer.
-
-config TEGRA186_GPC_DMA
-        bool "NVIDIA Tegra186 GPC DMA support"
-        depends on ARCH_TEGRA_18x_SOC
-        select DMA_ENGINE
-        help
-          Support for the NVIDIA Tegra186 GPC DMA controller driver. The
-          DMA controller is having multiple DMA channel which can be
-          configured for different peripherals like UART, SPI, etc which
-          are on APB bus.
-          This DMA controller transfers data from memory to peripheral fifo
-          or vice versa. It also supports memory to memory data transfer.
-
 
 config TIMB_DMA
 	tristate "Timberdale FPGA DMA support"

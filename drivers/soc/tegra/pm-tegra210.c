@@ -459,8 +459,6 @@ DEFINE_SIMPLE_ATTRIBUTE(duration_us_fops, NULL, idle_write, "%llu\n");
 
 static int debugfs_init(void)
 {
-	struct dentry *dfs_file;
-
 	cpuidle_debugfs_root = debugfs_create_dir("cpuidle_t210", NULL);
 
 	if (!cpuidle_debugfs_root) {
@@ -468,29 +466,15 @@ static int debugfs_init(void)
 		return -ENOMEM;
 	}
 
-	dfs_file = debugfs_create_file("fast_cluster_states_enable", 0644,
+	debugfs_create_file("fast_cluster_states_enable", 0644,
 			cpuidle_debugfs_root, NULL, &fast_cluster_enable_fops);
-	if (!dfs_file) {
-		pr_err("failed to create ast_cluster_states_enable\n");
-		goto err_out;
-	}
 
-	dfs_file = debugfs_create_u64("forced_idle_state", 0644,
+	debugfs_create_u64("forced_idle_state", 0644,
 				      cpuidle_debugfs_root, &idle_state);
 
-	if (!dfs_file) {
-		pr_err("failed to create forced_idle_state\n");
-		goto err_out;
-	}
 
-
-	dfs_file = debugfs_create_file("forced_idle_duration_us", 0200,
+	debugfs_create_file("forced_idle_duration_us", 0200,
 				cpuidle_debugfs_root, NULL, &duration_us_fops);
-
-	if (!dfs_file) {
-		pr_err("failed to create forced_idle_duration_us\n");
-		goto err_out;
-	}
 
 	return 0;
 
