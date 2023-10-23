@@ -478,9 +478,6 @@ static int debugfs_init(void)
 
 	return 0;
 
-err_out:
-	debugfs_remove_recursive(cpuidle_debugfs_root);
-	return -ENOMEM;
 }
 #else
 static inline int debugfs_init(void) { return 0; }

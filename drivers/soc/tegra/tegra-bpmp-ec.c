@@ -132,7 +132,7 @@ static const struct file_operations ec_status_fops = {
 
 static int __init bpmp_ec_debugfs_init(void)
 {
-	struct dentry *d, *dir;
+	struct dentry *dir;
 
 	dir = debugfs_create_dir("tegra_ec", NULL);
 	if (!dir)

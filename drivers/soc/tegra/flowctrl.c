@@ -33,9 +33,16 @@ static u8 flowctrl_offset_cpu_csr[] = {
 	FLOW_CTRL_CPU1_CSR + 16,
 };
 
+static u8 flowctrl_offset_cc4_ctrl[] = {
+        FLOW_CTRL_CC4_CORE0_CTRL,
+        FLOW_CTRL_CC4_CORE0_CTRL + 4,
+        FLOW_CTRL_CC4_CORE0_CTRL + 8,
+        FLOW_CTRL_CC4_CORE0_CTRL + 12,
+};
+
 static void __iomem *tegra_flowctrl_base;
 
-static void flowctrl_update(u8 offset, u32 value)
+void flowctrl_update(u8 offset, u32 value)
 {
 	if (WARN_ONCE(IS_ERR_OR_NULL(tegra_flowctrl_base),
 		      "Tegra flowctrl not initialised!\n"))
@@ -57,6 +64,11 @@ u32 flowctrl_read_cpu_csr(unsigned int cpuid)
 		return 0;
 
 	return readl(tegra_flowctrl_base + offset);
+}
+
+void flowctrl_write_cc4_ctrl(unsigned int cpuid, u32 value)
+{
+        return flowctrl_update(flowctrl_offset_cc4_ctrl[cpuid], value);
 }
 
 void flowctrl_write_cpu_csr(unsigned int cpuid, u32 value)

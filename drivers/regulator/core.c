@@ -4039,6 +4039,69 @@ int regulator_set_voltage(struct regulator *regulator, int min_uV, int max_uV)
 }
 EXPORT_SYMBOL_GPL(regulator_set_voltage);
 
+/**
+ * regulator_set_sleep_voltage - set regulator output voltage on sleep mode
+ * @regulator: regulator source
+ * @min_uV: Minimum required voltage in uV
+ * @max_uV: Maximum acceptable voltage in uV
+ */
+int regulator_set_sleep_voltage(struct regulator *regulator,
+                int min_uV, int max_uV)
+{
+        struct regulator_dev *rdev = regulator->rdev;
+        int ret = 0;
+        int sel;
+
+#ifdef CONFIG_REGULATOR_DUMMY
+        if (!strcmp(rdev->desc->name, "dummy")) {
+                rdev_info(rdev,
+                        "regulator is dummy, skipping voltage change...\n");
+                return ret;
+        }
+#endif
+
+        mutex_lock(&rdev->mutex);
+
+        /* sanity check */
+        if (!rdev->desc->ops->set_sleep_voltage_sel) {
+                ret = -EINVAL;
+                goto out;
+        }
+
+        /* constraints check */
+        ret = regulator_check_voltage(rdev, &min_uV, &max_uV);
+        if (ret < 0)
+                goto out;
+
+        if (rdev->desc->ops->map_voltage) {
+                sel = rdev->desc->ops->map_voltage(rdev, min_uV, max_uV);
+        } else {
+                if (rdev->desc->ops->list_voltage ==
+                            regulator_list_voltage_linear)
+                        sel = regulator_map_voltage_linear(rdev,
+                                                min_uV, max_uV);
+                else
+                        sel = regulator_map_voltage_iterate(rdev,
+                                                min_uV, max_uV);
+        }
+
+        if (sel >= 0) {
+                int best_val;
+                best_val = rdev->desc->ops->list_voltage(rdev, sel);
+                if (min_uV <= best_val && max_uV >= best_val)
+                        ret = rdev->desc->ops->set_sleep_voltage_sel(rdev, sel);
+                else
+                        ret = -EINVAL;
+        } else {
+                ret = sel;
+        }
+out:
+        mutex_unlock(&rdev->mutex);
+        return ret;
+}
+EXPORT_SYMBOL_GPL(regulator_set_sleep_voltage);
+
+
 static inline int regulator_suspend_toggle(struct regulator_dev *rdev,
 					   suspend_state_t state, bool en)
 {
