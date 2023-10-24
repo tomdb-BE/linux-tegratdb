@@ -30,12 +30,6 @@
 #define FLOW_CTRL_CSR_ENABLE		(1 << 0)
 #define FLOW_CTRL_HALT_CPU1_EVENTS	0x14
 #define FLOW_CTRL_CPU1_CSR		0x18
-#define FLOW_CTLR_CC4_HVC_CONTROL       0x60
-#define FLOW_CTRL_CC4_HVC_ENABLE        (1 << 0)
-#define FLOW_CTRL_CC4_RETENTION_CONTROL 0x64
-#define FLOW_CTRL_CC4_CORE0_CTRL        0x6c
-#define FLOW_CTRL_WAIT_WFI_BITMAP       0x100
-#define FLOW_CTRL_CC4_HVC_RETRY         0x8c
 
 #define TEGRA20_FLOW_CTRL_CSR_WFE_CPU0		(1 << 4)
 #define TEGRA20_FLOW_CTRL_CSR_WFE_BITMAP	(3 << 4)
@@ -53,11 +47,6 @@ void flowctrl_write_cpu_halt(unsigned int cpuid, u32 value);
 
 void flowctrl_cpu_suspend_enter(unsigned int cpuid);
 void flowctrl_cpu_suspend_exit(unsigned int cpuid);
-
-void flowctrl_update(u8 offset, u32 value);
-void flowctrl_write_cc4_ctrl(unsigned int cpuid, u32 value);
-void flowctrl_write_cpu_csr(unsigned int cpuid, u32 value);
-void flowctrl_write_cpu_halt(unsigned int cpuid, u32 value);
 #else
 static inline u32 flowctrl_read_cpu_csr(unsigned int cpuid)
 {

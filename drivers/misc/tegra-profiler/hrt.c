@@ -128,7 +128,7 @@ static int pid_list_search(pid_t pid)
 
 static inline u32 get_task_state(struct task_struct *task)
 {
-	return (u32)(task->state | task->exit_state);
+	return (u32)(task->__state | task->exit_state);
 }
 
 static inline u64 get_posix_clock_monotonic_time(void)

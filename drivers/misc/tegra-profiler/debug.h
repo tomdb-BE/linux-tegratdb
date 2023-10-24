@@ -86,7 +86,6 @@ quadd_get_hw_event_str(int event)
 	if (event >= QM_ARRAY_SIZE(str))
 		return "invalid event";
 
-	speculation_barrier();
 	return str[event];
 }
 

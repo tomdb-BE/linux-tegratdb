@@ -15,7 +15,7 @@ config ARCH_TEGRA_2x_SOC
 	select PL310_ERRATA_769419 if CACHE_L2X0
 	select SOC_TEGRA_FLOWCTRL
 	select SOC_TEGRA_PMC
-	select SOC_TEGRA20_VOLTAGE_COUPLER if REGULATOR
+	select SOC_TEGRA20_VOLTAGE_COUPLER
 	select TEGRA_TIMER
 	help
 	  Support for NVIDIA Tegra AP20 and T20 processors, based on the
@@ -29,7 +29,7 @@ config ARCH_TEGRA_3x_SOC
 	select PL310_ERRATA_769419 if CACHE_L2X0
 	select SOC_TEGRA_FLOWCTRL
 	select SOC_TEGRA_PMC
-	select SOC_TEGRA30_VOLTAGE_COUPLER if REGULATOR
+	select SOC_TEGRA30_VOLTAGE_COUPLER
 	select TEGRA_TIMER
 	help
 	  Support for NVIDIA Tegra T30 processor family, based on the
@@ -95,6 +95,7 @@ config ARCH_TEGRA_210_SOC
 
 config ARCH_TEGRA_186_SOC
 	bool "NVIDIA Tegra186 SoC"
+	select PINCTRL_TEGRA186
 	select MAILBOX
 	select TEGRA_BPMP
 	select TEGRA_HSP_MBOX
@@ -110,6 +111,7 @@ config ARCH_TEGRA_186_SOC
 
 config ARCH_TEGRA_194_SOC
 	bool "NVIDIA Tegra194 SoC"
+	select PINCTRL_TEGRA194
 	select MAILBOX
 	select PINCTRL_TEGRA194
 	select TEGRA_BPMP
@@ -142,10 +144,10 @@ config SOC_TEGRA_FLOWCTRL
 	bool
 
 config SOC_TEGRA_PMC
-	bool
+	bool "TEGRA SOC Power Management Controller"
 	select GENERIC_PINCONF
-	select PM_OPP
-	select PM_GENERIC_DOMAINS
+        help
+	  Say Y here to enable tegra soc pmc driver.
 
 config SOC_TEGRA_POWERGATE_BPMP
 	def_bool y
@@ -155,36 +157,26 @@ config SOC_TEGRA_POWERGATE_BPMP
 config SOC_TEGRA20_VOLTAGE_COUPLER
 	bool "Voltage scaling support for Tegra20 SoCs"
 	depends on ARCH_TEGRA_2x_SOC || COMPILE_TEST
-	depends on REGULATOR
 
 config SOC_TEGRA30_VOLTAGE_COUPLER
 	bool "Voltage scaling support for Tegra30 SoCs"
 	depends on ARCH_TEGRA_3x_SOC || COMPILE_TEST
-	depends on REGULATOR
 
-config TEGRA_KFUSE
-        bool "Tegra kfuse support"
-        default n
-        depends on ARCH_TEGRA
-        help
-          Enable Tegra kfuse support. The kfuse block stores downstream and
-          upstream HDCP keys for use by the HDMI module.
+config TEGRA_USE_NA_GPCPLL
+	bool "Enable noise aware mode of GM20B GPCPLL on Tegra"
+	depends on COMMON_CLK
+	depends on ARCH_TEGRA_210_SOC
+	default y
+	help
+	  Enable noise aware (NA) mode of GM20b GPCPLL. In this mode PLL output
+	  frequency is automatically adjusted when GM20b voltage is fluctuating
+	  because of transient PMIC or power distribution tree noise.
 
-config TEGRA_PROC_POWER_MODEL
-        bool "Tegra process power model support"
-        depends on ARCH_TEGRA
-        help
-          Used to create a simple processor power model (PPM) by
-          collating various chip specific data including voltage,
-          frequency, and number of cores. This driver is used by
-          various other drivers including EDP.
-
-config TEGRA_ANDROID
-        bool "Tegra native Android support"
-        default n
-        depends on ARCH_TEGRA
-        help
-          Use to let NVIDIA Tegra drivers run the Native Android specific
-          subroutines. This Config to separate the cases of Android Container
-          and native Android.
-
+config SOC_TEGRA_CBB
+	tristate "Tegra driver to handle error from CBB"
+	depends on ARCH_TEGRA_194_SOC || ARCH_TEGRA_234_SOC
+	default y
+	help
+	  Support for handling error from Tegra Control Backbone(CBB).
+	  This driver handles the errors from CBB and prints debug
+	  information about the failed transactions.
