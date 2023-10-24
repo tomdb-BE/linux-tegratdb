@@ -15,7 +15,7 @@
 #include <linux/of_platform.h>
 #include <linux/of_reserved_mem.h>
 #include <linux/syscore_ops.h>
-#include "arm-smmu-regs-t19x.h"
+#include "arm-smmu-regs.h"
 
 #ifdef CONFIG_PM_SLEEP
 
