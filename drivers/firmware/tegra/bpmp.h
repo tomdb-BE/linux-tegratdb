@@ -96,4 +96,17 @@ void tegra_bpmp_resume(void);
 int tegra_bpmp_suspend(void);
 void bpmp_handle_irq(unsigned int chidx);
 
+struct tegra_bpmp;
+void tegra_bpmp_handle_rx(struct tegra_bpmp *bpmp);
+
+#if IS_ENABLED(CONFIG_CLK_TEGRA_BPMP)
+int tegra_bpmp_init_clocks(struct tegra_bpmp *bpmp);
+#else
+static inline int tegra_bpmp_init_clocks(struct tegra_bpmp *bpmp)
+{
+        return 0;
+}
+#endif
+
+
 #endif

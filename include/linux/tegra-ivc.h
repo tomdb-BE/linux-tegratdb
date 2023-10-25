@@ -47,6 +47,7 @@ struct tegra_hv_ivc_cookie {
 	int peer_vmid;
 	int nframes;
 	int frame_size;
+	uint32_t *notify_va; /* address used to notify end-point */
 };
 
 struct tegra_hv_ivc_ops {
@@ -63,9 +64,23 @@ struct tegra_hv_ivm_cookie {
 	uint64_t size;
 	unsigned peer_vmid;
 	void *reserved;
-	bool is_vpr;
-	bool can_alloc; /* Only valid when is_vpr == 1 */
 };
+
+/* FIXME: overrides to avoid conflict with upstreamed ivc APIs */
+#define tegra_ivc_can_read nv_tegra_ivc_can_read
+#define tegra_ivc_can_write nv_tegra_ivc_can_write
+#define tegra_ivc_tx_empty nv_tegra_ivc_tx_empty
+#define tegra_ivc_tx_frames_available nv_tegra_ivc_tx_frames_available
+#define tegra_ivc_read nv_tegra_ivc_read
+#define tegra_ivc_read_peek nv_tegra_ivc_read_peek
+#define tegra_ivc_read_get_next_frame nv_tegra_ivc_read_get_next_frame
+#define tegra_ivc_read_advance nv_tegra_ivc_read_advance
+#define tegra_ivc_write nv_tegra_ivc_write
+#define tegra_ivc_write_poke nv_tegra_ivc_write_poke
+#define tegra_ivc_write_get_next_frame nv_tegra_ivc_write_get_next_frame
+#define tegra_ivc_write_advance nv_tegra_ivc_write_advance
+#define tegra_ivc_channel_reset nv_tegra_ivc_channel_reset
+#define tegra_ivc_channel_notified nv_tegra_ivc_channel_notified
 
 int tegra_ivc_write(struct ivc *ivc, const void *buf, size_t size);
 int tegra_ivc_read(struct ivc *ivc, void *buf, size_t size);
@@ -168,7 +183,7 @@ int tegra_hv_ivc_can_write(struct tegra_hv_ivc_cookie *ivck);
  * value returned as the receiver consumes frames.
  *
  */
-uint32_t tegra_hv_ivc_tx_frames_avilable(struct tegra_hv_ivc_cookie *ivck);
+uint32_t tegra_hv_ivc_tx_frames_available(struct tegra_hv_ivc_cookie *ivck);
 
 /**
  * ivc_hv_ivc_tx_empty - Test whether the tx queue is empty
@@ -270,13 +285,6 @@ void *tegra_hv_ivc_write_get_next_frame(struct tegra_hv_ivc_cookie *ivck);
 int tegra_hv_ivc_write_advance(struct tegra_hv_ivc_cookie *ivck);
 
 /**
- * tegra_hv_mempool_reserve_vpr - Reserve the IVM-VPR mempool if it exists
- *
- * Returns a cookie representing the mempool on success, otherwise an ERR_PTR.
- */
-struct tegra_hv_ivm_cookie *tegra_hv_mempool_reserve_vpr(void);
-
-/**
  * tegra_hv_mempool_reserve - reserve a mempool for use
  * @id		Id of the requested mempool.
  *
@@ -314,6 +322,28 @@ int tegra_hv_ivc_channel_notified(struct tegra_hv_ivc_cookie *ivck);
  */
 void tegra_hv_ivc_channel_reset(struct tegra_hv_ivc_cookie *ivck);
 
+/**
+ * tegra_hv_ivc_get_info - Get info of Guest shared area
+ * @ivck	IVC cookie of the queue
+ * @pa		IPA of shared area
+ * @size	Size of the shared area
+ *
+ * Get info (IPA and size) of Guest shared area
+ *
+ * Returns size on success and an error code otherwise
+ */
+int tegra_hv_ivc_get_info(struct tegra_hv_ivc_cookie *ivck, uint64_t *pa,
+			  uint64_t *size);
+
+/**
+ * tegra_hv_ivc_notify - Notify remote guest
+ * @ivck	IVC cookie of the queue
+ *
+ * Notify remote guest
+ *
+ */
+void tegra_hv_ivc_notify(struct tegra_hv_ivc_cookie *ivck);
+
 struct ivc *tegra_hv_ivc_convert_cookie(struct tegra_hv_ivc_cookie *ivck);
 #else
 static inline struct tegra_hv_ivc_cookie *tegra_hv_ivc_reserve(
@@ -350,7 +380,7 @@ static inline int tegra_hv_ivc_can_write(struct tegra_hv_ivc_cookie *ivck)
 	return 0;
 }
 
-static inline uint32_t tegra_hv_ivc_tx_frames_avilable(
+static inline uint32_t tegra_hv_ivc_tx_frames_available(
 		struct tegra_hv_ivc_cookie *ivck)
 {
 	return 0;
@@ -423,6 +453,16 @@ static inline int tegra_hv_ivc_channel_notified(
 }
 
 static inline void tegra_hv_ivc_channel_reset(struct tegra_hv_ivc_cookie *ivck)
+{
+}
+
+static inline int tegra_hv_ivc_get_info(struct tegra_hv_ivc_cookie *ivck,
+					uint64_t *pa, uint64_t *size)
+{
+	return -ENODEV;
+}
+
+static inline void tegra_hv_ivc_notify(struct tegra_hv_ivc_cookie *ivck)
 {
 }
 

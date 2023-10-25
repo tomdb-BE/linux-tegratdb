@@ -34,7 +34,7 @@
 #include <linux/platform/tegra/tegra18_emc.h>
 #include <linux/platform/tegra/tegra_emc_err.h>
 
-#include <soc/tegra/chip-id.h>
+#include <soc/tegra/fuse.h>
 
 static struct mc_ecc_err_log ecc_log;
 static u32 mc_emem_arb_misc1;

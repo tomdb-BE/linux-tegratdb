@@ -16,7 +16,6 @@
 
 #include <linux/debugfs.h>
 #include <soc/tegra/bpmp_t210_abi.h>
-#include <soc/tegra/tegra_bpmp.h>
 #include "bpmp.h"
 
 struct bpmp_cpuidle_state {

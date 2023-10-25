@@ -46,7 +46,7 @@ extern void __iomem *mssnvlink_regs[MC_MAX_MSSNVLINK_HUBS];
 #include <linux/io.h>
 #include <linux/debugfs.h>
 
-#include <soc/tegra/chip-id.h>
+#include <soc/tegra/fuse.h>
 
 /**
  * Check if the MC has more than 1 channel.

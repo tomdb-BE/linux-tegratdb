@@ -6,6 +6,7 @@
 #ifndef ABI_BPMP_ABI_H
 #define ABI_BPMP_ABI_H
 
+#include <soc/tegra/bpmp_abi.h>
 #if defined(LK) || defined(BPMP_ABI_HAVE_STDC)
 #include <stddef.h>
 #include <stdint.h>

@@ -27,7 +27,6 @@
 #include <linux/tegra-ivc.h>
 #include <linux/version.h>
 #include <soc/tegra/bpmp_abi.h>
-#include <soc/tegra/tegra_bpmp.h>
 #include <soc/tegra/tegra_powergate.h>
 #include <linux/slab.h>
 #include "bpmp.h"
@@ -43,8 +42,8 @@ static int bpmp_get_fwtag(void)
 	const size_t sz = sizeof(struct mrq_query_fw_tag_response);
 	struct mrq_query_abi_request abi_req = { .mrq = MRQ_QUERY_FW_TAG };
 	struct mrq_query_abi_response abi_resp;
-	int r;
 	char *virt;
+	int r;
 	dma_addr_t phys;
 
 	r = tegra_bpmp_send_receive(MRQ_QUERY_ABI, &abi_req,

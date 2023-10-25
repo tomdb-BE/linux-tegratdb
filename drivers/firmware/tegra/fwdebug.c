@@ -22,11 +22,7 @@
 #include <linux/uaccess.h>
 #include <soc/tegra/bpmp_abi.h>
 #include <linux/version.h>
-#if KERNEL_VERSION(4, 15, 0) > LINUX_VERSION_CODE
-#include <soc/tegra/chip-id.h>
-#else
 #include <soc/tegra/fuse.h>
-#endif
 #include <soc/tegra/tegra_bpmp.h>
 #include "bpmp.h"
 
@@ -136,8 +132,8 @@ static int bpmp_debug_open(const char *name, uint32_t *fd,
 	struct mrq_debug_response dbg_re;
 
 	/* File open */
-	dbg_rq.cmd = (uint32_t)cpu_to_le32(write ? CMD_DEBUGFS_OPEN_WO :
-						CMD_DEBUGFS_OPEN_RO);
+	dbg_rq.cmd = (uint32_t)cpu_to_le32(write ? CMD_DEBUG_OPEN_WO :
+						CMD_DEBUG_OPEN_RO);
 	dest = dbg_rq.fop.name;
 	sz_name = strscpy(dest, name, sizeof(dbg_rq.fop.name));
 	if (sz_name < 0) {
@@ -161,7 +157,7 @@ static int bpmp_debug_close(uint32_t fd)
 	struct mrq_debug_request dbg_rq;
 	struct mrq_debug_response dbg_re;
 
-	dbg_rq.cmd = (uint32_t)cpu_to_le32(CMD_DEBUGFS_CLOSE);
+	dbg_rq.cmd = (uint32_t)cpu_to_le32(CMD_DEBUG_CLOSE);
 	dbg_rq.frd.fd = fd;
 	r = tegra_bpmp_send_receive(MRQ_DEBUG, &dbg_rq, sizeof(dbg_rq),
 			&dbg_re, sizeof(dbg_re));
@@ -190,7 +186,7 @@ static int bpmp_debug_read(const char *name, char *data,
 		r = -EFBIG;
 		goto close_end;
 	}
-	dbg_rq.cmd = (uint32_t)cpu_to_le32(CMD_DEBUGFS_READ);
+	dbg_rq.cmd = (uint32_t)cpu_to_le32(CMD_DEBUG_READ);
 	dbg_rq.frd.fd = fd;
 	remaining = len;
 	while (remaining > 0) {
@@ -243,7 +239,7 @@ static int bpmp_debug_write(const char *name, uint8_t *data,
 		goto close_ret;
 	}
 	dbg_rq.fwr.datalen = sz_data;
-	dbg_rq.cmd = (uint32_t)cpu_to_le32(CMD_DEBUGFS_WRITE);
+	dbg_rq.cmd = (uint32_t)cpu_to_le32(CMD_DEBUG_WRITE);
 	dbg_rq.fwr.fd = fd;
 	remaining = sz_data;
 	dataptr = data;
@@ -911,8 +907,9 @@ static int bpmp_module_ready(const char *name, const struct firmware *fw,
 		struct bpmp_module *m)
 {
 	struct module_hdr *hdr;
-	const int sz = sizeof(firmware_tag);
-	char fmt[sz + 1];
+	//const int sz = sizeof(firmware_tag);
+	int sz = sizeof(struct mrq_query_fw_tag_response);
+	char fmt[sizeof(firmware_tag) + 1];
 	int err;
 
 	hdr = (struct module_hdr *)fw->data;
@@ -943,11 +940,8 @@ static int bpmp_module_ready(const char *name, const struct firmware *fw,
 		return err;
 	}
 
-	if (!debugfs_create_x32("handle", S_IRUGO, m->root, &m->handle))
-		return -ENOMEM;
-
-	if (!debugfs_create_x32("size", S_IRUGO, m->root, &m->size))
-		return -ENOMEM;
+	debugfs_create_x32("handle", S_IRUGO, m->root, &m->handle);
+	debugfs_create_x32("size", S_IRUGO, m->root, &m->size);
 
 	list_add_tail(&m->entry, &modules);
 

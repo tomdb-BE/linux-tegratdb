@@ -24,7 +24,7 @@
 #include <linux/tegra-ivc.h>
 #include <soc/tegra/bpmp_abi.h>
 #include <linux/version.h>
-#include <soc/tegra/chip-id.h>
+#include <soc/tegra/fuse-helper.h>
 #include "bpmp.h"
 
 #define HSP_SHRD_SEM_1_STA	0x1b0000
