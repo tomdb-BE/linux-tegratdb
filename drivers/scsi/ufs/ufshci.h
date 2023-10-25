@@ -73,6 +73,15 @@ enum {
 /* UFS Version 08h */
 #define MINOR_VERSION_NUM_MASK		UFS_MASK(0xFFFF, 0)
 #define MAJOR_VERSION_NUM_MASK		UFS_MASK(0xFFFF, 16)
+#define UFS_CONG_DESC_SIZE 0xe6 /* confg desc size */
+
+enum {
+        UFSHCI_VERSION_10 = 0x00010000, /* 1.0 */
+        UFSHCI_VERSION_11 = 0x00010100, /* 1.1 */
+        UFSHCI_VERSION_20 = 0x00000200, /* 2.0 */
+        UFSHCI_VERSION_21 = 0x00000210, /* 2.1 */
+        UFSHCI_VERSION_30 = 0x00000300, /* 3.0 */
+};
 
 /*
  * Controller UFSHCI version
@@ -133,16 +142,13 @@ static inline u32 ufshci_version(u32 major, u32 minor)
 
 #define UFSHCD_UIC_MASK		(UIC_COMMAND_COMPL | UFSHCD_UIC_PWR_MASK)
 
-#define UFSHCD_ERROR_MASK	(UIC_ERROR |\
-				DEVICE_FATAL_ERROR |\
-				CONTROLLER_FATAL_ERROR |\
-				SYSTEM_BUS_FATAL_ERROR |\
-				CRYPTO_ENGINE_FATAL_ERROR)
+#define UFSHCD_ERROR_MASK	(UIC_ERROR | INT_FATAL_ERRORS)
 
 #define INT_FATAL_ERRORS	(DEVICE_FATAL_ERROR |\
 				CONTROLLER_FATAL_ERROR |\
 				SYSTEM_BUS_FATAL_ERROR |\
-				CRYPTO_ENGINE_FATAL_ERROR)
+				CRYPTO_ENGINE_FATAL_ERROR |\
+				UIC_LINK_LOST)
 
 /* HCS - Host Controller Status 30h */
 #define DEVICE_PRESENT				0x1

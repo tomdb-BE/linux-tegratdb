@@ -36,6 +36,7 @@
 #ifndef __ASSEMBLY__
 
 #include <linux/of.h>
+#include <soc/tegra/fuse.h>
 
 /* Tegra HIDREV/ChipID helper macros */
 #define HIDREV_CHIPID_SHIFT		0x8
@@ -68,43 +69,6 @@ static inline u32 tegra_hidrev_get_pre_si_plat(u32 chipid)
 	return (chipid >> HIDREV_PRE_SI_PLAT_SHIFT) & HIDREV_PRE_SI_PLAT_MASK;
 }
 
-u32 tegra_read_chipid(void);
-
-enum tegra_revision {
-	TEGRA_REVISION_UNKNOWN = 0,
-	TEGRA_REVISION_A01,
-	TEGRA_REVISION_A01q,
-	TEGRA_REVISION_A02,
-	TEGRA_REVISION_A02p,
-	TEGRA_REVISION_A03,
-	TEGRA_REVISION_A03p,
-	TEGRA_REVISION_A04,
-	TEGRA_REVISION_A04p,
-	TEGRA210_REVISION_A01,
-	TEGRA210_REVISION_A01q,
-	TEGRA210_REVISION_A02,
-	TEGRA210_REVISION_A02p,
-	TEGRA210_REVISION_A03,
-	TEGRA210_REVISION_A03p,
-	TEGRA210_REVISION_A04,
-	TEGRA210_REVISION_A04p,
-	TEGRA210B01_REVISION_A01,
-	TEGRA186_REVISION_A01,
-	TEGRA186_REVISION_A01q,
-	TEGRA186_REVISION_A02,
-	TEGRA186_REVISION_A02p,
-	TEGRA186_REVISION_A03,
-	TEGRA186_REVISION_A03p,
-	TEGRA186_REVISION_A04,
-	TEGRA186_REVISION_A04p,
-	TEGRA194_REVISION_A01,
-	TEGRA194_REVISION_A02,
-	TEGRA194_REVISION_A02p,
-	TEGRA_REVISION_QT,
-	TEGRA_REVISION_SIM,
-	TEGRA_REVISION_MAX,
-};
-
 enum tegra_ucm {
 	TEGRA_UCM1 = 0,
 	TEGRA_UCM2,
@@ -112,26 +76,6 @@ enum tegra_ucm {
 
 /* wrappers for the old fuse.h names */
 #define soc_process_id core_process_id
-
-struct tegra_sku_info {
-	int sku_id;
-	int cpu_process_id;
-	int cpu_speedo_id;
-	int cpu_speedo_value;
-	int cpu_iddq_value;
-	int core_process_id;
-	int soc_speedo_id;
-	int soc_speedo_value;
-	int soc_iddq_value;
-	int gpu_speedo_id;
-	int gpu_process_id;
-	int gpu_speedo_value;
-	int gpu_iddq_value;
-	enum tegra_revision revision;
-	enum tegra_revision id_and_rev;
-	enum tegra_ucm ucm;
-	int speedo_rev;
-};
 
 u32 tegra_read_straps(void);
 u32 tegra_read_chipid(void);
@@ -289,7 +233,6 @@ bool is_tegra_hypervisor_mode(void);
 void tegra_get_netlist_revision(u32 *netlist, u32* patchid);
 bool tegra_cpu_is_asim(void);
 bool tegra_cpu_is_dsim(void);
-enum tegra_platform tegra_get_platform(void);
 static inline bool tegra_platform_is_silicon(void)
 {
 	return tegra_get_platform() == TEGRA_PLATFORM_SILICON;

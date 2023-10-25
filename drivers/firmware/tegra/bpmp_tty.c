@@ -190,7 +190,7 @@ static int bpmp_tty_write(struct tty_struct *tty, const unsigned char *buf,
 	return tx_count;
 }
 
-static int bpmp_tty_write_room(struct tty_struct *tty)
+static unsigned int bpmp_tty_write_room(struct tty_struct *tty)
 {
 	unsigned char dummy;
 	int ret;
@@ -378,7 +378,7 @@ static int bpmp_tty_probe(struct platform_device *pdev)
 	return 0;
 
 err_put_tty_driver:
-	put_tty_driver(drvdata->tty_driver);
+	tty_driver_kref_put(drvdata->tty_driver);
 	return ret;
 }
 
@@ -389,7 +389,7 @@ static int bpmp_tty_remove(struct platform_device *pdev)
 
 	bpmp_tty_remove_debugfs(drvdata);
 	tty_unregister_driver(drvdata->tty_driver);
-	put_tty_driver(drvdata->tty_driver);
+	tty_driver_kref_put(drvdata->tty_driver);
 
 	return 0;
 }

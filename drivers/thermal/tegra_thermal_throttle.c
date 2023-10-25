@@ -32,6 +32,8 @@
 #define GPU_STEP_HZ		(102 * KHZ_TO_HZ * KHZ_TO_HZ)
 #define MAX_CPU_CLUSTERS	4
 
+#define CPUFREQ_ADJUST          (0)
+
 struct tegra_throt_cdev_clk;
 struct tegra_throt_cdev {
 	struct thermal_cooling_device *cdev;
@@ -122,7 +124,7 @@ static unsigned long tegra_throt_calc_rate(unsigned long idx,
 static int tegra_throt_cpufreq_notifier(struct notifier_block *nb,
 					unsigned long event, void *data)
 {
-	struct cpufreq_policy *policy = data;
+	struct cpufreq_policy_data *policy = data;
 
 	if (event != CPUFREQ_ADJUST)
 		return 0;
@@ -165,7 +167,7 @@ static void tegra_throt_rate_set(int type, unsigned long rate)
 		}
 		break;
 	case TEGRA_THROTTLE_GPU:
-		pm_qos_update_request(&tegra_throt_gpu_req, rate);
+		cpu_latency_qos_update_request(&tegra_throt_gpu_req, rate);
 		break;
 	default:
 		pr_err("tegra_throt: incorrect type: %d\n", type);
@@ -522,8 +524,7 @@ static int tegra_throt_freq_gov_init(int type)
 
 		break;
 	case TEGRA_THROTTLE_GPU:
-		pm_qos_add_request(&tegra_throt_gpu_req, PM_QOS_GPU_FREQ_MAX,
-				PM_QOS_GPU_FREQ_MAX_DEFAULT_VALUE);
+		cpu_latency_qos_add_request(&tegra_throt_gpu_req, PM_QOS_GPU_FREQ_MAX_DEFAULT_VALUE);
 		ret = 0;
 		break;
 	}
@@ -627,7 +628,7 @@ static int tegra_throt_remove(struct platform_device *pdev)
 	dev_info(&pdev->dev, "remove\n");
 	cpufreq_unregister_notifier(&tegra_throt_cpufreq_nb,
 					CPUFREQ_POLICY_NOTIFIER);
-	pm_qos_remove_request(&tegra_throt_gpu_req);
+	cpu_latency_qos_remove_request(&tegra_throt_gpu_req);
 	tegra_throt_dbgfs_remove(tegra_throt_root);
 	list_for_each_entry(pos, &tegra_throt_cdev_list, cdev_list)
 		thermal_cooling_device_unregister(pos->cdev);

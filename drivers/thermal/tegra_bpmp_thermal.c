@@ -39,6 +39,8 @@
 #define CREATE_TRACE_POINTS
 #include <trace/events/bpmp_thermal.h>
 
+#define CPUFREQ_ADJUST                        (0)
+
 struct tegra_bpmp_thermal_zone {
 	struct tegra_bpmp_thermal *tegra;
 	struct thermal_zone_device *tzd;

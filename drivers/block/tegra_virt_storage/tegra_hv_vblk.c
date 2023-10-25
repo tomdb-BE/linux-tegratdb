@@ -228,7 +228,7 @@ static int vblk_get_configinfo(struct vblk_dev *vblkdev)
 static void req_error_handler(struct vblk_dev *vblkdev,
 			      struct request *breq, int error)
 {
-	if ((breq->cmd_flags & REQ_QUIET) == 0)
+	if ((breq->cmd_flags & RQF_QUIET) == 0)
 		dev_err(vblkdev->device,
 			"Error for request pos %llx type %llx size %x\n",
 			(blk_rq_pos(breq) * (uint64_t)SECTOR_SIZE),
@@ -442,7 +442,7 @@ static bool is_valid_request(struct vblk_dev *vblkdev,
 		if (rq_code == checks[i].rq_code &&
 		    (vblkdev->config.blk_config.req_ops_supported &
 			checks[i].flag) == 0) {
-			bio->cmd_flags |= REQ_QUIET;
+			bio->cmd_flags |= RQF_QUIET;
 			dev_dbg(vblkdev->device, "%s\n", checks[i].err_msg);
 			return false;
 		}

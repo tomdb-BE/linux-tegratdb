@@ -326,12 +326,15 @@ struct ufs_hba_variant_ops {
 	int	(*init)(struct ufs_hba *);
 	void    (*exit)(struct ufs_hba *);
 	u32	(*get_ufs_hci_version)(struct ufs_hba *);
+        void    (*hce_disable_notify)(struct ufs_hba *,
+                                     enum ufs_notify_change_status);
 	int	(*clk_scale_notify)(struct ufs_hba *, bool,
 				    enum ufs_notify_change_status);
 	int	(*setup_clocks)(struct ufs_hba *, bool,
 				enum ufs_notify_change_status);
 	int	(*hce_enable_notify)(struct ufs_hba *,
 				     enum ufs_notify_change_status);
+        void    (*hibern8_entry_notify)(struct ufs_hba *, int flag);	
 	int	(*link_startup_notify)(struct ufs_hba *,
 				       enum ufs_notify_change_status);
 	int	(*pwr_change_notify)(struct ufs_hba *,
@@ -356,6 +359,7 @@ struct ufs_hba_variant_ops {
 			       const union ufs_crypto_cfg_entry *cfg, int slot);
 	void	(*event_notify)(struct ufs_hba *hba,
 				enum ufs_event_type evt, void *data);
+        int     (*set_ufs_mphy_clocks)(struct ufs_hba *, bool);
 };
 
 /* clock gating state  */
@@ -588,6 +592,15 @@ enum ufshcd_quirks {
 	 * This quirk allows only sg entries aligned with page size.
 	 */
 	UFSHCD_QUIRK_ALIGN_SG_WITH_PAGE_SIZE		= 1 << 14,
+        /*
+         * This quirk needs to be enabled if BKOPS feature has to be enabled
+         */
+        UFSHCD_QUIRK_ENABLE_BKOPS                       = 1 << 15,
+
+        /*
+         * Enable this quirk to support UFS WLUNS
+         */
+        UFSHCD_QUIRK_ENABLE_WLUNS                       = 1 << 16,	
 };
 
 enum ufshcd_caps {
@@ -706,6 +719,11 @@ struct ufs_hba_monitor {
 	bool enabled;
 };
 
+struct ufs_init_prefetch {
+        u32 icc_level;
+        u32 ref_clk_freq;
+};
+
 /**
  * struct ufs_hba - per adapter private structure
  * @mmio_base: UFSHCI base register address
@@ -725,6 +743,7 @@ struct ufs_hba_monitor {
  * @capabilities: UFS Controller Capabilities
  * @nutrs: Transfer Request Queue depth supported by controller
  * @nutmrs: Task Management Queue depth supported by controller
+ * @reserved_slot: Used to submit device commands. Protected by @dev_cmd.lock.
  * @ufs_version: UFS Version to which controller complies
  * @vops: pointer to variant specific operations
  * @priv: pointer to variant specific private data
@@ -762,6 +781,7 @@ struct ufs_hba_monitor {
  * @urgent_bkops_lvl: keeps track of urgent bkops level for device
  * @is_urgent_bkops_lvl_checked: keeps track if the urgent bkops level for
  *  device is known or not.
+ * @wb_mutex: used to serialize devfreq and sysfs write booster toggling
  * @scsi_block_reqs_cnt: reference counting for scsi block requests
  * @crypto_capabilities: Content of crypto capabilities register (0x100)
  * @crypto_cap_array: Array of crypto capabilities
@@ -813,6 +833,7 @@ struct ufs_hba {
 	u32 capabilities;
 	int nutrs;
 	int nutmrs;
+	u32 reserved_slot;
 	u32 ufs_version;
 	const struct ufs_hba_variant_ops *vops;
 	struct ufs_hba_variant_params *vps;
@@ -871,9 +892,6 @@ struct ufs_hba {
 	struct ufs_vreg_info vreg_info;
 	struct list_head clk_list_head;
 
-	bool wlun_dev_clr_ua;
-	bool wlun_rpmb_clr_ua;
-
 	/* Number of requests aborts */
 	int req_abort_count;
 
@@ -893,6 +911,7 @@ struct ufs_hba {
 	enum bkops_status urgent_bkops_lvl;
 	bool is_urgent_bkops_lvl_checked;
 
+	struct mutex wb_mutex;
 	struct rw_semaphore clk_scaling_lock;
 	unsigned char desc_size[QUERY_DESC_IDN_MAX];
 	atomic_t scsi_block_reqs_cnt;
@@ -920,7 +939,8 @@ struct ufs_hba {
 #endif
 	u32 luns_avail;
 	bool complete_put;
-	bool rpmb_complete_put;
+	bool card_present;
+	struct ufs_init_prefetch init_prefetch_data;
 };
 
 /* Returns true if clocks can be gated. Otherwise false */
@@ -1393,14 +1413,11 @@ static inline int ufshcd_rpm_put(struct ufs_hba *hba)
 	return pm_runtime_put(&hba->sdev_ufs_device->sdev_gendev);
 }
 
-static inline int ufshcd_rpmb_rpm_get_sync(struct ufs_hba *hba)
-{
-	return pm_runtime_get_sync(&hba->sdev_rpmb->sdev_gendev);
-}
-
-static inline int ufshcd_rpmb_rpm_put(struct ufs_hba *hba)
-{
-	return pm_runtime_put(&hba->sdev_rpmb->sdev_gendev);
-}
+int ufshcd_set_refclk_value(struct ufs_hba *hba, u32 *value);
+int ufshcd_get_refclk_value(struct ufs_hba *hba, u32 *value);
+int ufshcd_get_bootlun_en_value(struct ufs_hba *hba, u32 *value);
+int ufshcd_set_bootlun_en_value(struct ufs_hba *hba, u32 *value);
+int ufshcd_get_config_desc_lock(struct ufs_hba *hba, u32 *value);
+int ufshcd_set_config_desc(struct ufs_hba *hba, u8 *desc_buf);
 
 #endif /* End of Header */

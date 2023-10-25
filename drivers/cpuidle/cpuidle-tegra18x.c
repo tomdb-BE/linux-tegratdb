@@ -24,8 +24,8 @@
 #include <linux/module.h>
 #include <linux/of_platform.h>
 #include <linux/debugfs.h>
-#include <soc/tegra/chip-id.h>
 #include <soc/tegra/fuse.h>
+#include <soc/tegra/chip-id.h>
 #include <linux/tegra-mce.h>
 #include <linux/tegra186-pm.h>
 #include <linux/suspend.h>
@@ -556,96 +556,58 @@ DEFINE_SIMPLE_ATTRIBUTE(a57_cc_state_fops, a57_cc_get,
 
 static int cpuidle_debugfs_init(void)
 {
-	struct dentry *dfs_file;
-
 	cpuidle_debugfs_denver = debugfs_create_dir("cpuidle_denver", NULL);
 	if (!cpuidle_debugfs_denver)
 		goto err_out;
 
-	dfs_file = debugfs_create_u64("forced_idle_state", 0644,
+	debugfs_create_u64("forced_idle_state", 0644,
 		cpuidle_debugfs_denver, &denver_idle_state);
 
-	if (!dfs_file)
-		goto err_out;
-
-	dfs_file = debugfs_create_u64("forced_cluster_idle_state", 0644,
+	debugfs_create_u64("forced_cluster_idle_state", 0644,
 		cpuidle_debugfs_denver, &denver_cluster_idle_state);
 
-	if (!dfs_file)
-		goto err_out;
-
-	dfs_file = debugfs_create_file("forced_idle_duration_us", 0200,
+	debugfs_create_file("forced_idle_duration_us", 0200,
 		cpuidle_debugfs_denver, NULL, &duration_us_denver_fops);
 
-	if (!dfs_file)
-		goto err_out;
-
-	dfs_file = debugfs_create_file("testmode", 0200,
+	debugfs_create_file("testmode", 0200,
 		cpuidle_debugfs_denver, NULL, &denver_testmode_fops);
-	if (!dfs_file)
-		goto err_out;
 
-	dfs_file = debugfs_create_file("crossover_c1_c6", 0200,
+	debugfs_create_file("crossover_c1_c6", 0200,
 		cpuidle_debugfs_denver, NULL, &denver_xover_c6_fops);
-	if (!dfs_file)
-		goto err_out;
 
-	dfs_file = debugfs_create_file("crossover_cc1_cc6", 0200,
+	debugfs_create_file("crossover_cc1_cc6", 0200,
 		cpuidle_debugfs_denver, NULL, &denver_xover_cc6_fops);
-	if (!dfs_file)
-		goto err_out;
 
-	dfs_file = debugfs_create_file("crossover_cc1_cc7", 0200,
+	debugfs_create_file("crossover_cc1_cc7", 0200,
 		cpuidle_debugfs_denver, NULL, &denver_xover_cc7_fops);
-	if (!dfs_file)
-		goto err_out;
 
-	dfs_file = debugfs_create_file("deepest_cc_state", 0644,
+	debugfs_create_file("deepest_cc_state", 0644,
 		cpuidle_debugfs_denver, NULL, &denver_cc_state_fops);
-	if (!dfs_file)
-		goto err_out;
 
 	cpuidle_debugfs_a57 = debugfs_create_dir("cpuidle_a57", NULL);
 	if (!cpuidle_debugfs_a57)
 		goto err_out;
 
-	dfs_file = debugfs_create_u64("forced_idle_state", 0644,
+	debugfs_create_u64("forced_idle_state", 0644,
 		cpuidle_debugfs_a57, &a57_idle_state);
 
-	if (!dfs_file)
-		goto err_out;
-
-	dfs_file = debugfs_create_file("testmode", 0200,
+	debugfs_create_file("testmode", 0200,
 		cpuidle_debugfs_a57, NULL, &a57_testmode_fops);
-	if (!dfs_file)
-		goto err_out;
 
-	dfs_file = debugfs_create_u64("forced_cluster_idle_state", 0644,
+	debugfs_create_u64("forced_cluster_idle_state", 0644,
 		cpuidle_debugfs_a57, &a57_cluster_idle_state);
 
-	if (!dfs_file)
-		goto err_out;
-
-	dfs_file = debugfs_create_file("forced_idle_duration_us", 0200,
+	debugfs_create_file("forced_idle_duration_us", 0200,
 		cpuidle_debugfs_a57, NULL, &duration_us_a57_fops);
 
-	if (!dfs_file)
-		goto err_out;
-
-	dfs_file = debugfs_create_file("crossover_cc1_cc6", 0200,
+	debugfs_create_file("crossover_cc1_cc6", 0200,
 		cpuidle_debugfs_a57, NULL, &a57_xover_cc6_fops);
-	if (!dfs_file)
-		goto err_out;
 
-	dfs_file = debugfs_create_file("crossover_cc1_cc7", 0200,
+	debugfs_create_file("crossover_cc1_cc7", 0200,
 		cpuidle_debugfs_a57, NULL, &a57_xover_cc7_fops);
-	if (!dfs_file)
-		goto err_out;
 
-	dfs_file = debugfs_create_file("deepest_cc_state", 0644,
+	debugfs_create_file("deepest_cc_state", 0644,
 		cpuidle_debugfs_a57, NULL, &a57_cc_state_fops);
-	if (!dfs_file)
-		goto err_out;
 
 	return 0;
 

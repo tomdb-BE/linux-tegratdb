@@ -1,53 +1,26 @@
-# SPDX-License-Identifier: GPL-2.0-only
-menu "Tegra firmware driver"
-
-config TEGRA_IVC
-	bool "Tegra IVC protocol"
-	depends on ARCH_TEGRA
-	help
-	  IVC (Inter-VM Communication) protocol is part of the IPC
-	  (Inter Processor Communication) framework on Tegra. It maintains the
-	  data and the different communication channels in SysRAM or RAM and
-	  keeps the content is synchronization between host CPU and remote
-	  processors.
-
-config TEGRA_BPMP
-	bool "Tegra BPMP driver"
-	depends on ARCH_TEGRA && TEGRA_HSP_MBOX && TEGRA_IVC
-	help
-	  BPMP (Boot and Power Management Processor) is designed to off-loading
-	  the PM functions which include clock/DVFS/thermal/power from the CPU.
-	  It needs HSP as the HW synchronization and notification module and
-	  IVC module as the message communication protocol.
-
-	  This driver manages the IPC interface between host CPU and the
-	  firmware running on BPMP.
-
-endmenu
-
 menu "Tegra BPMP Driver"
 
 config NV_TEGRA_BPMP
-        bool "Tegra BPMP driver (Downstream version)"
-        default n
-        select NV_TEGRA_IVC
-        select TEGRA_HSP
-        help
-          Manages firmware running on Tegra BPMP
+	bool "Tegra BPMP driver (Downstream version)"
+	default n
+	depends on !TEGRA_BPMP
+	select NV_TEGRA_IVC
+	select TEGRA_HSP
+	help
+	  Manages firmware running on Tegra BPMP
 
-          This driver is a downstream version and there is a newer variant
-          available in modern kernels.
+	  This driver is a downstream version and there is a newer variant
+	  available in modern kernels.
 
 config BPMP_DEBUGFS_MOUNT_ON_BOOT
-        bool "Mount the BPMP debug fs on boot"
-        default y
-        depends on DEBUG_FS && NV_TEGRA_BPMP
-        help
-          Disable this if you don't want to mount the BPMP debug fs by default
-          on boot.
+	bool "Mount the BPMP debug fs on boot"
+	default y
+	depends on DEBUG_FS && NV_TEGRA_BPMP
+	help
+	  Disable this if you don't want to mount the BPMP debug fs by default
+	  on boot.
 
-          Note disabling this will save some boot time. BPMP debugfs still can
-          be mounted after the boot.
+	  Note disabling this will save some boot time. BPMP debugfs still can
+	  be mounted after the boot.
 
 endmenu
-

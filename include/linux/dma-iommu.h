@@ -13,6 +13,7 @@
 #include <linux/iommu.h>
 #include <linux/msi.h>
 
+
 /* Domain management interface for IOMMU drivers */
 int iommu_get_dma_cookie(struct iommu_domain *domain);
 int iommu_get_msi_cookie(struct iommu_domain *domain, dma_addr_t base);
@@ -42,6 +43,11 @@ void iommu_dma_free_cpu_cached_iovas(unsigned int cpu,
 		struct iommu_domain *domain);
 
 extern bool iommu_dma_forcedac;
+
+dma_addr_t iommu_dma_alloc_iova(struct iommu_domain *domain,
+                size_t size, u64 dma_limit, struct device *dev);
+void iommu_dma_free_iova(struct iommu_dma_cookie *cookie,
+                dma_addr_t iova, size_t size, struct iommu_iotlb_gather *gather);
 
 #else /* CONFIG_IOMMU_DMA */
 

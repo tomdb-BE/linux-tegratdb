@@ -431,43 +431,43 @@ static int dma_info_to_prot(enum dma_data_direction dir, bool coherent,
 }
 
 static dma_addr_t iommu_dma_alloc_iova(struct iommu_domain *domain,
-		size_t size, u64 dma_limit, struct device *dev)
+                size_t size, u64 dma_limit, struct device *dev)
 {
-	struct iommu_dma_cookie *cookie = domain->iova_cookie;
-	struct iova_domain *iovad = &cookie->iovad;
-	unsigned long shift, iova_len, iova = 0;
+        struct iommu_dma_cookie *cookie = domain->iova_cookie;
+        struct iova_domain *iovad = &cookie->iovad;
+        unsigned long shift, iova_len, iova = 0;
 
-	if (cookie->type == IOMMU_DMA_MSI_COOKIE) {
-		cookie->msi_iova += size;
-		return cookie->msi_iova - size;
-	}
+        if (cookie->type == IOMMU_DMA_MSI_COOKIE) {
+                cookie->msi_iova += size;
+                return cookie->msi_iova - size;
+        }
 
-	shift = iova_shift(iovad);
-	iova_len = size >> shift;
-	/*
-	 * Freeing non-power-of-two-sized allocations back into the IOVA caches
-	 * will come back to bite us badly, so we have to waste a bit of space
-	 * rounding up anything cacheable to make sure that can't happen. The
-	 * order of the unadjusted size will still match upon freeing.
-	 */
-	if (iova_len < (1 << (IOVA_RANGE_CACHE_MAX_SIZE - 1)))
-		iova_len = roundup_pow_of_two(iova_len);
+        shift = iova_shift(iovad);
+        iova_len = size >> shift;
+        /*
+         * Freeing non-power-of-two-sized allocations back into the IOVA caches
+         * will come back to bite us badly, so we have to waste a bit of space
+         * rounding up anything cacheable to make sure that can't happen. The
+         * order of the unadjusted size will still match upon freeing.
+         */
+        if (iova_len < (1 << (IOVA_RANGE_CACHE_MAX_SIZE - 1)))
+                iova_len = roundup_pow_of_two(iova_len);
 
-	dma_limit = min_not_zero(dma_limit, dev->bus_dma_limit);
+        dma_limit = min_not_zero(dma_limit, dev->bus_dma_limit);
 
-	if (domain->geometry.force_aperture)
-		dma_limit = min(dma_limit, (u64)domain->geometry.aperture_end);
+        if (domain->geometry.force_aperture)
+                dma_limit = min(dma_limit, (u64)domain->geometry.aperture_end);
 
-	/* Try to get PCI devices a SAC address */
-	if (dma_limit > DMA_BIT_MASK(32) && !iommu_dma_forcedac && dev_is_pci(dev))
-		iova = alloc_iova_fast(iovad, iova_len,
-				       DMA_BIT_MASK(32) >> shift, false);
+        /* Try to get PCI devices a SAC address */
+        if (dma_limit > DMA_BIT_MASK(32) && !iommu_dma_forcedac && dev_is_pci(dev))
+                iova = alloc_iova_fast(iovad, iova_len,
+                                       DMA_BIT_MASK(32) >> shift, false);
 
-	if (!iova)
-		iova = alloc_iova_fast(iovad, iova_len, dma_limit >> shift,
-				       true);
+        if (!iova)
+                iova = alloc_iova_fast(iovad, iova_len, dma_limit >> shift,
+                                       true);
 
-	return (dma_addr_t)iova << shift;
+        return (dma_addr_t)iova << shift;
 }
 
 static void iommu_dma_free_iova(struct iommu_dma_cookie *cookie,

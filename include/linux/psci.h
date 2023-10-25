@@ -34,6 +34,11 @@ struct psci_operations {
 
 extern struct psci_operations psci_ops;
 
+struct extended_psci_operations {
+        u32 (*make_power_state)(u32 state);
+};
+extern struct extended_psci_operations extended_ops;
+
 struct psci_0_1_function_ids {
 	u32 cpu_suspend;
 	u32 cpu_on;

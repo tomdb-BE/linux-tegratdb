@@ -1,6 +1,18 @@
-// SPDX-License-Identifier: GPL-2.0
 /*
- * Copyright (c) 2016-2021, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2016-2020, NVIDIA CORPORATION.  All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify it
+ * under the terms and conditions of the GNU General Public License,
+ * version 2, as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+ * more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
  */
 
 #include <linux/module.h>
@@ -17,6 +29,9 @@
 #define TEGRAID_NETLIST_MASK 0xFF
 #define TEGRAID_PATCH_MASK 0xFF00
 #define TEGRAID_PATCH_SHIFT 8
+#define TEGRA210_INT_CID 5
+#define TEGRA186_INT_CID 6
+#define TEGRA194_INT_CID 7
 
 struct tegra_id {
 	enum tegra_chipid chipid;
@@ -41,6 +56,7 @@ static struct tegra_id tegra_id;
 static const char *tegra_platform_ptr;
 static const char *tegra_cpu_ptr;
 static u32 prod_mode;
+static u64 chip_uid;
 
 static int get_platform(char *val, const struct kernel_param *kp)
 {
@@ -156,3 +172,110 @@ enum tegra_chipid tegra_get_chipid(void)
 	return tegra_id.chipid;
 }
 EXPORT_SYMBOL(tegra_get_chipid);
+
+unsigned long long tegra_chip_uid(void)
+{
+
+	u64 uid = 0ull;
+	u32 reg;
+	u32 cid;
+	u32 vendor;
+	u32 fab;
+	u32 lot;
+	u32 wafer;
+	u32 x;
+	u32 y;
+	u32 i;
+
+	/*
+	 * This used to be so much easier in prior chips. Unfortunately, there
+	 * is no one-stop shopping for the unique id anymore. It must be
+	 *  constructed from various bits of information burned into the fuses
+	 *  during the manufacturing process. The 64-bit unique id is formed
+	 *  by concatenating several bit fields. The notation used for the
+	 *  various fields is <fieldname:size_in_bits> with the UID composed
+	 *  thusly:
+	 *
+	 *  <CID:4><VENDOR:4><FAB:6><LOT:26><WAFER:6><X:9><Y:9>
+	 *
+	 * Where:
+	 *
+	 *	Field    Bits  Position Data
+	 *	-------  ----  -------- ----------------------------------------
+	 *	CID        4     60     Chip id
+	 *	VENDOR     4     56     Vendor code
+	 *	FAB        6     50     FAB code
+	 *	LOT       26     24     Lot code (5-digit base-36-coded-decimal,
+	 *				re-encoded to 26 bits binary)
+	 *	WAFER      6     18     Wafer id
+	 *	X          9      9     Wafer X-coordinate
+	 *	Y          9      0     Wafer Y-coordinate
+	 *	-------  ----
+	 *	Total     64
+	 */
+
+	reg = tegra_get_chip_id();
+	switch (reg) {
+	case TEGRA210:
+		cid = TEGRA210_INT_CID;
+		break;
+	case TEGRA186:
+		cid = TEGRA186_INT_CID;
+		break;
+	case TEGRA194:
+		cid = TEGRA194_INT_CID;
+		break;
+	default:
+		cid = 0;
+		break;
+	};
+
+	tegra_fuse_readl(FUSE_OPT_VENDOR_CODE, &reg);
+	vendor = reg & FUSE_OPT_VENDOR_CODE_MASK;
+	tegra_fuse_readl(FUSE_OPT_FAB_CODE, &reg);
+	fab = reg & FUSE_OPT_FAB_CODE_MASK;
+
+	/* Lot code must be re-encoded from a 5 digit base-36 'BCD' number
+	 * to a binary number.
+	 */
+	lot = 0;
+	tegra_fuse_readl(FUSE_OPT_LOT_CODE_0, &reg);
+	reg = reg << 2;
+
+	for (i = 0; i < 5; ++i) {
+		u32 digit = (reg & 0xFC000000) >> 26;
+
+		WARN_ON(digit >= 36);
+		lot *= 36;
+		lot += digit;
+		reg <<= 6;
+	}
+
+	tegra_fuse_readl(FUSE_OPT_WAFER_ID, &reg);
+	wafer = reg & FUSE_OPT_WAFER_ID_MASK;
+	tegra_fuse_readl(FUSE_OPT_X_COORDINATE, &reg);
+	x = reg & FUSE_OPT_X_COORDINATE_MASK;
+	tegra_fuse_readl(FUSE_OPT_Y_COORDINATE, &reg);
+	y = reg & FUSE_OPT_Y_COORDINATE_MASK;
+
+	uid = ((unsigned long long)cid  << 60ull)
+	    | ((unsigned long long)vendor << 56ull)
+	    | ((unsigned long long)fab << 50ull)
+	    | ((unsigned long long)lot << 24ull)
+	    | ((unsigned long long)wafer << 18ull)
+	    | ((unsigned long long)x << 9ull)
+	    | ((unsigned long long)y << 0ull);
+	return uid;
+}
+
+static int get_chip_uid(char *val, const struct kernel_param *kp)
+{
+	chip_uid = tegra_chip_uid();
+	return param_get_ulong(val, kp);
+}
+
+static struct kernel_param_ops tegra_chip_uid_ops = {
+	.get = get_chip_uid,
+};
+
+module_param_cb(tegra_chip_uid, &tegra_chip_uid_ops, &chip_uid, 0444);
