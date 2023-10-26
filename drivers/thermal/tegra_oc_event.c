@@ -27,7 +27,7 @@
 #include <linux/of_address.h>
 #include <linux/tegra-hsp.h>
 #include <dt-bindings/thermal/tegra194-soctherm.h>
-#include <soc/tegra/chip-id.h>
+#include <soc/tegra/fuse.h>
 
 #define EDP_OC_OC1_STATS_0			0x4a8
 #define EDP_OC_STATS(i)				(EDP_OC_OC1_STATS_0 + ((i) * 4))

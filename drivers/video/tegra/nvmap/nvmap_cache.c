@@ -19,7 +19,7 @@
 #include <linux/io.h>
 #include <linux/debugfs.h>
 #include <linux/of.h>
-#include <soc/tegra/chip-id.h>
+#include <soc/tegra/fuse.h>
 
 #include <trace/events/nvmap.h>
 

@@ -27,7 +27,12 @@
 #include <linux/of.h>
 #include <linux/of_irq.h>
 
+#include <linux/version.h>
+#if KERNEL_VERSION(4, 15, 0) > LINUX_VERSION_CODE
 #include <soc/tegra/chip-id.h>
+#else
+#include <soc/tegra/fuse.h>
+#endif
 #include <linux/tegra-ivc.h>
 
 #include <soc/tegra/virt/syscalls.h>
@@ -55,6 +60,7 @@ struct hv_ivc {
 	/* channel configuration */
 	struct ivc		ivc;
 	const struct tegra_hv_queue_data *qd;
+	const struct ivc_shared_area *area;
 	const struct guest_ivc_info *givci;
 	int			other_guestid;
 
@@ -110,10 +116,33 @@ struct tegra_hv_data {
  */
 static const struct tegra_hv_data *tegra_hv_data;
 
+#ifdef SUPPORTS_TRAP_MSI_NOTIFICATION
+struct ivc_notify_info {
+	// Trap based notification
+	uintptr_t trap_region_base_va;
+	uintptr_t trap_region_base_ipa;
+	uintptr_t trap_region_end_ipa;
+	uint64_t trap_region_size;
+	// MSI based notification
+	uintptr_t msi_region_base_va;
+	uintptr_t msi_region_base_ipa;
+	uintptr_t msi_region_end_ipa;
+	uint64_t msi_region_size;
+};
+
+static struct ivc_notify_info ivc_notify;
+#endif
+
 static void ivc_raise_irq(struct ivc *ivc_channel)
 {
 	struct hv_ivc *ivc = container_of(ivc_channel, struct hv_ivc, ivc);
+#ifdef SUPPORTS_TRAP_MSI_NOTIFICATION
+	if (WARN_ON(!ivc->cookie.notify_va))
+		return;
+	*ivc->cookie.notify_va = ivc->qd->raise_irq;
+#else
 	hyp_raise_irq(ivc->qd->raise_irq, ivc->other_guestid);
+#endif
 }
 
 static const struct tegra_hv_data *get_hvd(void)
@@ -192,6 +221,9 @@ static int tegra_hv_add_ivc(struct tegra_hv_data *hvd,
 	uintptr_t rx_base, tx_base;
 	uint32_t i;
 	struct irq_data *d;
+#ifdef SUPPORTS_TRAP_MSI_NOTIFICATION
+	uint64_t va_offset;
+#endif
 
 	ivc = &hvd->ivc_devs[qd->id];
 	BUG_ON(ivc->valid);
@@ -212,9 +244,9 @@ static int tegra_hv_add_ivc(struct tegra_hv_data *hvd,
 	 * through this channel.
 	 */
 	for (i = 0; i < hvd->info->nr_areas; i++) {
-		if (ivc_shared_area_addr(hvd->info, i)->guest ==
-				ivc->other_guestid) {
+		if (hvd->info->areas[i].guest == ivc->other_guestid) {
 			ivc->givci = &hvd->guest_ivc_info[i];
+			ivc->area = &hvd->info->areas[i];
 			break;
 		}
 	}
@@ -245,7 +277,10 @@ static int tegra_hv_add_ivc(struct tegra_hv_data *hvd,
 		rx_base = ivc->givci->shmem + qd->offset + qd->size;
 	}
 
-	snprintf(ivc->name, sizeof(ivc->name), "ivc%u", qd->id);
+	ret = snprintf(ivc->name, sizeof(ivc->name), "ivc%u", qd->id);
+	if (ret < 0) {
+		return -EINVAL;
+	}
 
 	ivc->irq = of_irq_get(hvd->dev, index);
 	if (ivc->irq < 0) {
@@ -258,6 +293,35 @@ static int tegra_hv_add_ivc(struct tegra_hv_data *hvd,
 				qd->id);
 		return -ENODEV;
 	}
+
+#ifdef SUPPORTS_TRAP_MSI_NOTIFICATION
+	if (qd->msi_ipa != 0U) {
+		if (WARN_ON(ivc_notify.msi_region_size == 0UL))
+			return -EINVAL;
+		if (WARN_ON(!(qd->msi_ipa >= ivc_notify.msi_region_base_ipa &&
+			qd->msi_ipa <= ivc_notify.msi_region_end_ipa))) {
+			return -EINVAL;
+		}
+		va_offset = qd->msi_ipa - ivc_notify.msi_region_base_ipa;
+		ivc->cookie.notify_va =
+			(uint32_t *)(ivc_notify.msi_region_base_va +
+			va_offset);
+	} else if (qd->trap_ipa != 0U) {
+		if (WARN_ON(ivc_notify.trap_region_size == 0UL))
+			return -EINVAL;
+		if (WARN_ON(!(qd->trap_ipa >= ivc_notify.trap_region_base_ipa &&
+			qd->trap_ipa <= ivc_notify.trap_region_end_ipa))) {
+			return -EINVAL;
+		}
+		va_offset = qd->trap_ipa - ivc_notify.trap_region_base_ipa;
+		ivc->cookie.notify_va =
+			(uint32_t *)(ivc_notify.trap_region_base_va +
+			va_offset);
+	} else {
+		if (WARN_ON(ivc->cookie.notify_va == NULL))
+			return -EINVAL;
+	}
+#endif
 
 	INFO("adding ivc%u: rx_base=%lx tx_base = %lx size=%x irq = %d (%lu)\n",
 			qd->id, rx_base, tx_base, qd->size, ivc->irq, d->hwirq);
@@ -274,7 +338,7 @@ static int tegra_hv_add_ivc(struct tegra_hv_data *hvd,
 	return 0;
 }
 
-struct hv_ivc *ivc_device_by_id(const struct tegra_hv_data *hvd, uint32_t id)
+static struct hv_ivc *ivc_device_by_id(const struct tegra_hv_data *hvd, uint32_t id)
 {
 	if (id > hvd->max_qid)
 		return NULL;
@@ -314,7 +378,7 @@ static void __init tegra_hv_cleanup(struct tegra_hv_data *hvd)
 		BUG_ON(!hvd->info);
 		for (i = 0; i < hvd->info->nr_areas; i++) {
 			if (hvd->guest_ivc_info[i].shmem) {
-				iounmap((void *)hvd->guest_ivc_info[i].shmem);
+				iounmap((void __iomem *)hvd->guest_ivc_info[i].shmem);
 				hvd->guest_ivc_info[i].shmem = 0;
 			}
 		}
@@ -322,7 +386,7 @@ static void __init tegra_hv_cleanup(struct tegra_hv_data *hvd)
 		kfree(hvd->guest_ivc_info);
 		hvd->guest_ivc_info = NULL;
 
-		iounmap((void *)hvd->info);
+		iounmap((void __iomem *)hvd->info);
 		hvd->info = NULL;
 	}
 
@@ -380,12 +444,64 @@ static int __init tegra_hv_setup(struct tegra_hv_data *hvd)
 		return ret;
 	}
 
-	hvd->info = (struct ivc_info_page *)ioremap_cache(info_page,
-			PAGE_SIZE);
+	hvd->info = (__force struct ivc_info_page *)ioremap_cache(info_page,
+			IVC_INFO_PAGE_SIZE);
 	if (hvd->info == NULL) {
 		ERR("failed to map IVC info page (%llx)\n", info_page);
 		return -ENOMEM;
 	}
+
+#ifdef SUPPORTS_TRAP_MSI_NOTIFICATION
+	/*
+	 *  Map IVC Trap MMIO Notification region
+	 */
+	ivc_notify.trap_region_base_ipa = hvd->info->trap_region_base_ipa;
+	ivc_notify.trap_region_size = hvd->info->trap_region_size;
+	if (ivc_notify.trap_region_size != 0UL) {
+		INFO("trap_region_base_ipa %lx: trap_region_size=%llx\n",
+			ivc_notify.trap_region_base_ipa,
+			ivc_notify.trap_region_size);
+		if (WARN_ON(ivc_notify.trap_region_base_ipa == 0UL))
+			return -EINVAL;
+		if (WARN_ON(ivc_notify.trap_region_base_va != 0UL))
+			return -EINVAL;
+		ivc_notify.trap_region_end_ipa =
+			ivc_notify.trap_region_base_ipa +
+			ivc_notify.trap_region_size - 1UL;
+		ivc_notify.trap_region_base_va =
+			(uintptr_t)ioremap_cache(
+				ivc_notify.trap_region_base_ipa,
+				ivc_notify.trap_region_size);
+		if (ivc_notify.trap_region_base_va == 0UL) {
+			ERR("failed to map trap ipa notification page\n");
+			return -ENOMEM;
+		}
+	}
+
+	/*
+	 *  Map IVC MSI Notification region
+	 */
+	ivc_notify.msi_region_base_ipa = hvd->info->msi_region_base_ipa;
+	ivc_notify.msi_region_size = hvd->info->msi_region_size;
+	if (ivc_notify.msi_region_size != 0UL) {
+		INFO("msi_region_base_ipa %lx: msi_region_size=%llx\n",
+			ivc_notify.msi_region_base_ipa,
+			ivc_notify.msi_region_size);
+		if (WARN_ON(ivc_notify.msi_region_base_ipa == 0UL))
+			return -EINVAL;
+		if (WARN_ON(ivc_notify.msi_region_base_va != 0UL))
+			return -EINVAL;
+		ivc_notify.msi_region_end_ipa = ivc_notify.msi_region_base_ipa +
+				ivc_notify.msi_region_size - 1UL;
+		ivc_notify.msi_region_base_va =
+			(uintptr_t)ioremap_cache(ivc_notify.msi_region_base_ipa,
+			ivc_notify.msi_region_size);
+		if (ivc_notify.msi_region_base_va == 0UL) {
+			ERR("failed to map msi ipa notification page\n");
+			return -ENOMEM;
+		}
+	}
+#endif
 
 	hvd->guest_ivc_info = kzalloc(hvd->info->nr_areas *
 			sizeof(*hvd->guest_ivc_info), GFP_KERNEL);
@@ -397,17 +513,15 @@ static int __init tegra_hv_setup(struct tegra_hv_data *hvd)
 
 	for (i = 0; i < hvd->info->nr_areas; i++) {
 		hvd->guest_ivc_info[i].shmem = (uintptr_t)ioremap_cache(
-				ivc_shared_area_addr(hvd->info, i)->pa,
-				ivc_shared_area_addr(hvd->info, i)->size);
+				hvd->info->areas[i].pa,
+				hvd->info->areas[i].size);
 		if (hvd->guest_ivc_info[i].shmem == 0) {
 			ERR("can't map area for guest %u (%llx)\n",
-					ivc_shared_area_addr(
-							hvd->info, i)->guest,
-					ivc_shared_area_addr(hvd->info, i)->pa);
+					hvd->info->areas[i].guest,
+					hvd->info->areas[i].pa);
 			return -ENOMEM;
 		}
-		hvd->guest_ivc_info[i].length =
-				ivc_shared_area_addr(hvd->info, i)->size;
+		hvd->guest_ivc_info[i].length = hvd->info->areas[i].size;
 	}
 
 	/* Do not free this, of_add_property does not copy the structure */
@@ -429,11 +543,11 @@ static int __init tegra_hv_setup(struct tegra_hv_data *hvd)
 		if (qd->id > hvd->max_qid)
 			hvd->max_qid = qd->id;
 		/* 0 => SPI */
-		interrupts_arr[(i * intr_property_size)] = cpu_to_be32(0);
+		interrupts_arr[(i * intr_property_size)] = (__force uint32_t)cpu_to_be32(0);
 		interrupts_arr[(i * intr_property_size) + 1] =
-			cpu_to_be32(qd->irq - 32); /* Id in SPI namespace */
+			(__force uint32_t)cpu_to_be32(qd->irq - 32); /* Id in SPI namespace */
 		/* 0x1 == low-to-high edge */
-		interrupts_arr[(i * intr_property_size) + 2] = cpu_to_be32(0x1);
+		interrupts_arr[(i * intr_property_size) + 2] = (__force uint32_t)cpu_to_be32(0x1);
 	}
 
 	interrupts_prop.length =
@@ -486,12 +600,9 @@ static int __init tegra_hv_setup(struct tegra_hv_data *hvd)
 		ivmk->ipa = mpd->pa;
 		ivmk->size = mpd->size;
 		ivmk->peer_vmid = mpd->peer_vmid;
-		ivmk->is_vpr = mpd->is_vpr;
-		ivmk->can_alloc = mpd->can_alloc;
 
-		INFO("added mempool %u: ipa=%llx size=%llx peer=%u%s\n",
-				mpd->id, mpd->pa, mpd->size, mpd->peer_vmid,
-				mpd->is_vpr ? " - VPR backed" : "");
+		INFO("added mempool %u: ipa=%llx size=%llx peer=%u\n",
+				mpd->id, mpd->pa, mpd->size, mpd->peer_vmid);
 	}
 
 	return 0;
@@ -592,6 +703,49 @@ struct tegra_hv_ivc_cookie *tegra_hv_ivc_reserve(struct device_node *dn,
 	return ivck;
 }
 EXPORT_SYMBOL(tegra_hv_ivc_reserve);
+
+void tegra_hv_ivc_notify(struct tegra_hv_ivc_cookie *ivck)
+{
+	struct hv_ivc *ivc;
+
+	if (ivck == NULL)
+		return;
+
+	ivc = cookie_to_ivc_dev(ivck);
+#ifdef SUPPORTS_TRAP_MSI_NOTIFICATION
+	if (WARN_ON(!ivc->cookie.notify_va))
+		return;
+	*ivc->cookie.notify_va = ivc->qd->raise_irq;
+#else
+	hyp_raise_irq(ivc->qd->raise_irq, ivc->other_guestid);
+#endif
+}
+EXPORT_SYMBOL(tegra_hv_ivc_notify);
+
+int tegra_hv_ivc_get_info(struct tegra_hv_ivc_cookie *ivck, uint64_t *pa,
+			  uint64_t *size)
+{
+	struct hv_ivc *ivc;
+	int ret;
+
+	if (ivck == NULL)
+		return -EINVAL;
+
+	ivc = cookie_to_ivc_dev(ivck);
+
+	mutex_lock(&ivc->lock);
+	if (ivc->reserved) {
+		*pa = ivc->area->pa;
+		*size = ivc->area->size;
+		ret = 0;
+	} else {
+		ret = -EINVAL;
+	}
+	mutex_unlock(&ivc->lock);
+
+	return ret;
+}
+EXPORT_SYMBOL(tegra_hv_ivc_get_info);
 
 int tegra_hv_ivc_unreserve(struct tegra_hv_ivc_cookie *ivck)
 {
@@ -721,34 +875,6 @@ struct ivc *tegra_hv_ivc_convert_cookie(struct tegra_hv_ivc_cookie *ivck)
 	return &cookie_to_ivc_dev(ivck)->ivc;
 }
 EXPORT_SYMBOL(tegra_hv_ivc_convert_cookie);
-
-struct tegra_hv_ivm_cookie *tegra_hv_mempool_reserve_vpr(void)
-{
-	uint32_t i;
-	struct hv_mempool *mempool;
-	int reserved;
-
-	if (!tegra_hv_data)
-		return ERR_PTR(-EPROBE_DEFER);
-
-	/* Locate a mempool with matching VPR flag. */
-	for (i = 0; i < tegra_hv_data->info->nr_mempools; i++) {
-		mempool = &tegra_hv_data->mempools[i];
-		if (mempool->mpd->is_vpr)
-			break;
-	}
-
-	if (i == tegra_hv_data->info->nr_mempools)
-		return ERR_PTR(-ENODEV);
-
-	mutex_lock(&mempool->lock);
-	reserved = mempool->reserved;
-	mempool->reserved = 1;
-	mutex_unlock(&mempool->lock);
-
-	return reserved ? ERR_PTR(-EBUSY) : &mempool->ivmk;
-}
-EXPORT_SYMBOL(tegra_hv_mempool_reserve_vpr);
 
 struct tegra_hv_ivm_cookie *tegra_hv_mempool_reserve(unsigned id)
 {

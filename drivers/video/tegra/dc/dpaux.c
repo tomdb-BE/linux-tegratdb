@@ -22,7 +22,7 @@
 #include <linux/of_irq.h>
 #include <linux/tegra_pm_domains.h>
 #include <linux/delay.h>
-#include <soc/tegra/chip-id.h>
+#include <soc/tegra/fuse.h>
 
 #include "dpaux_regs.h"
 #include "dc_priv.h"

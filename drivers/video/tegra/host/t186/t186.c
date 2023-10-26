@@ -18,7 +18,7 @@
 
 #include <linux/slab.h>
 #include <linux/io.h>
-#include <soc/tegra/chip-id.h>
+#include <soc/tegra/fuse.h>
 #include <linux/platform/tegra/emc_bwmgr.h>
 
 #include <soc/tegra/kfuse.h>

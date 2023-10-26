@@ -25,7 +25,7 @@
 #include <linux/of_device.h>
 #include <linux/of_gpio.h>
 #include <linux/regmap.h>
-#include <soc/tegra/chip-id.h>
+#include <soc/tegra/fuse.h>
 #include <media/camera_common.h>
 #include <media/imx204.h>
 #include "imx204_mode_tbls.h"

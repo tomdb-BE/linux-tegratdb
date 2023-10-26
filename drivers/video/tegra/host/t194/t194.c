@@ -19,7 +19,7 @@
 #include <linux/delay.h>
 #include <linux/slab.h>
 #include <linux/io.h>
-#include <soc/tegra/chip-id.h>
+#include <soc/tegra/fuse.h>
 #include <linux/platform/tegra/emc_bwmgr.h>
 #include <linux/dma-override.h>
 

@@ -19,7 +19,7 @@
 #include <linux/module.h>
 #include <linux/of_platform.h>
 #include <linux/debugfs.h>
-#include <soc/tegra/chip-id.h>
+#include <soc/tegra/fuse.h>
 #include <linux/tegra-mce.h>
 #include <linux/t194_nvg.h>
 #include <linux/suspend.h>

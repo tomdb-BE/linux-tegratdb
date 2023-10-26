@@ -27,7 +27,7 @@
 #include <linux/delay.h>
 #include <linux/nospec.h>
 #include <trace/events/nvhost.h>
-#include <soc/tegra/chip-id.h>
+#include <soc/tegra/fuse.h>
 #include "nvhost_syncpt.h"
 #include "debug.h"
 

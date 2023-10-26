@@ -45,36 +45,6 @@
 /* UFS AUX address range in T234 */
 #define UFS_AUX_ADDR_RANGE_23X			0x20
 
-static inline bool tegra_platform_is_vdk(void)
-{
-        return false;
-}
-
-static inline bool tegra_platform_is_sim(void)
-{
-        return false;
-}
-
-static inline bool tegra_platform_is_fpga(void)
-{
-        return false;
-}
-
-static inline bool tegra_cpu_is_asim(void)
-{
-        return false;
-}
-
-static inline bool tegra_platform_is_qt(void)
-{
-        return false;
-}
-
-static inline bool tegra_platform_is_silicon(void)
-{
-        return true;
-}
-
 
 /*
  * M-PHY Registers

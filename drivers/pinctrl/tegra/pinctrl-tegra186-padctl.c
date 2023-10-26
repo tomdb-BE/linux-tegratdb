@@ -24,7 +24,7 @@
 #include <linux/regulator/consumer.h>
 #include <linux/workqueue.h>
 #include <soc/tegra/fuse.h>
-#include <soc/tegra/chip-id.h>
+#include <soc/tegra/fuse.h>
 #include <linux/clk.h>
 #include <linux/reset.h>
 #include <linux/slab.h>

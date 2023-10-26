@@ -19,7 +19,7 @@
 #include <linux/module.h>
 #include <linux/version.h>
 #include <sound/soc.h>
-#include <soc/tegra/chip-id.h>
+#include <soc/tegra/fuse.h>
 
 #include "tegra_asoc_utils_alt.h"
 #include "tegra_asoc_machine_alt.h"

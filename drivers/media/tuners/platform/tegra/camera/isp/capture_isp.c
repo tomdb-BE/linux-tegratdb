@@ -28,7 +28,7 @@
 #include "soc/tegra/camrtc-capture.h"
 #include "soc/tegra/camrtc-capture-messages.h"
 
-#include <soc/tegra/chip-id.h>
+#include <soc/tegra/fuse.h>
 
 #define CAPTURE_CHANNEL_UNKNOWN_RESP 0xFFFFFFFF
 #define CAPTURE_CHANNEL_ISP_INVALID_ID 0xFFFF

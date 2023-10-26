@@ -31,7 +31,7 @@
 #include <linux/of_address.h>
 #include <linux/interrupt.h>
 #include <linux/ioport.h>
-#include <soc/tegra/chip-id.h>
+#include <soc/tegra/fuse.h>
 #include <linux/platform/tegra/tegra19x_cbb.h>
 
 static LIST_HEAD(cbb_noc_list);

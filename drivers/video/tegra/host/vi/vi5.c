@@ -35,7 +35,7 @@
 #include <linux/uaccess.h>
 #include <media/capture_vi_channel.h>
 #include <soc/tegra/camrtc-capture.h>
-#include <soc/tegra/chip-id.h>
+#include <soc/tegra/fuse.h>
 
 #include "vi5.h"
 #include "dev.h"

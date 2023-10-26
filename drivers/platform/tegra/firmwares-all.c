@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2022, NVIDIA CORPORATION. All rights reserved.
+ * Copyright (c) 2016-2020, NVIDIA CORPORATION. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,47 +18,63 @@
 #include <linux/cpu.h>
 #include <asm/cpu.h>
 
-static enum cpuhp_state tegra_firmwares_cpu_state;
-static DEFINE_PER_CPU(struct device *, fwdev);
+#if IS_ENABLED(CONFIG_TRUSTY)
+#include <linux/trusty/trusty.h>
 
-static int tegra_cpu_online(unsigned int cpu)
+static ssize_t tegrafw_read_trusty(struct device *dev,
+				char *data, size_t size)
 {
-	char s_cpu[10];
-	char s_aidr[64];
-	struct cpuinfo_arm64 *cpuinfo = &per_cpu(cpu_data, cpu);
+	const struct of_device_id trusty_of_match[] = {
+		{.compatible = "android,trusty-smc-v1", },
+		{},
+	};
+	struct device_node *dn;
+	struct platform_device *pdev;
 
-	if (MIDR_IMPLEMENTOR(cpuinfo->reg_midr) != ARM_CPU_IMP_NVIDIA)
-		return 0;
-	snprintf(s_cpu, sizeof(s_cpu), "CPU%d", cpu);
-	snprintf(s_aidr, sizeof(s_aidr), "%u (0%x)",
-		cpuinfo->reg_aidr,
-		cpuinfo->reg_aidr);
-	per_cpu(fwdev, cpu) = tegrafw_register_string(s_cpu, s_aidr);
+	for_each_matching_node(dn, trusty_of_match) {
+		pdev = of_find_device_by_node(dn);
+		if (pdev == NULL)
+			continue;
+		return snprintf(data, size, "%s",
+			trusty_version_str_get(&pdev->dev));
+	}
+	snprintf(data, size, "NULL");
 	return 0;
 }
+#endif
 
-static int tegra_cpu_prepare_down(unsigned int cpu)
+static ssize_t tegrafw_read_denver(struct device *dev,
+				char *version, size_t size)
 {
-	if (per_cpu(fwdev, cpu))
-		tegrafw_unregister(per_cpu(fwdev, cpu));
-	per_cpu(fwdev, cpu) = NULL;
-	return 0;
+	char *v = version;
+	int i;
+	size_t printed = 0;
+
+	for_each_online_cpu(i) {
+		struct cpuinfo_arm64 *cpuinfo = &per_cpu(cpu_data, i);
+		u32 midr = cpuinfo->reg_midr;
+		u32 aidr;
+
+		if (MIDR_IMPLEMENTOR(midr) == ARM_CPU_IMP_NVIDIA) {
+			asm volatile("mrs %0, AIDR_EL1" : "=r" (aidr) : );
+			printed = snprintf(v, size, "CPU%d: %u(0x%x) ",
+				i, aidr, aidr);
+			size -= printed;
+			v += printed;
+		}
+	}
+
+	return v - version;
 }
 
-static enum cpuhp_state tegra_cpu_fw_register(void)
-{
-	return cpuhp_setup_state(CPUHP_AP_ONLINE_DYN,
-		"cpu/tegra-firmwares:online",
-		tegra_cpu_online,
-		tegra_cpu_prepare_down);
-}
-
-static void tegra_cpu_fw_unregister(enum cpuhp_state state)
-{
-	cpuhp_remove_state(state);
-}
-
-static struct device *firmwares[10];
+#define FIRMWARES_SIZE  10
+static struct device *firmwares[FIRMWARES_SIZE];
+#define check_out_of_bounds(dev, err) \
+	if ((dev) - firmwares >= ARRAY_SIZE(firmwares)) { \
+		pr_err("Cannot register 'legacy' firmware info: increase " \
+			"firmwares array size"); \
+		return (err); \
+	}
 
 static int __init tegra_firmwares_init(void)
 {
@@ -66,16 +82,20 @@ static int __init tegra_firmwares_init(void)
 	char *versions[] = { "mb1", "mb2", "mb1-bct", "qb", "osl" };
 	int v;
 
+	check_out_of_bounds(dev, 0);
+	*dev++ = tegrafw_register("MTS", TFW_NORMAL, tegrafw_read_denver, NULL);
+
+#if IS_ENABLED(CONFIG_TRUSTY)
+	check_out_of_bounds(dev, 0);
+	*dev++ = tegrafw_register("trusty", TFW_DONT_CACHE,
+				tegrafw_read_trusty, NULL);
+#endif
+
 	for (v = 0; v < ARRAY_SIZE(versions); v++) {
-		if (dev - firmwares >= ARRAY_SIZE(firmwares)) {
-			pr_err("Increase firmwares array size");
-			return 0;
-		}
+		check_out_of_bounds(dev, 0);
 		*dev++ = tegrafw_register_dt_string(versions[v],
 			"/tegra-firmwares", versions[v]);
 	}
-
-	tegra_firmwares_cpu_state = tegra_cpu_fw_register();
 	return 0;
 }
 
@@ -83,7 +103,6 @@ static void __exit tegra_firmwares_exit(void)
 {
 	struct device **dev = firmwares;
 
-	tegra_cpu_fw_unregister(tegra_firmwares_cpu_state);
 	while (dev - firmwares < ARRAY_SIZE(firmwares))
 		tegrafw_unregister(*dev++);
 }

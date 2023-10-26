@@ -20,7 +20,7 @@
 #include <linux/module.h>
 #include <linux/delay.h>
 #include <linux/wait.h>
-#include <soc/tegra/chip-id.h>
+#include <soc/tegra/fuse.h>
 #include <linux/platform_device.h>
 
 #include "nvhost_acm.h"

@@ -34,7 +34,7 @@
 #include <linux/export.h>
 #include <linux/slab.h>
 #include <linux/ftrace.h>
-#include <soc/tegra/chip-id.h>
+#include <soc/tegra/fuse.h>
 
 #include "chip_support.h"
 #include "dev.h"

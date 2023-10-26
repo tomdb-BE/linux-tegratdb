@@ -30,7 +30,7 @@
 #include <linux/completion.h>
 #include <linux/mtd/partitions.h>
 #include <linux/tegra-ivc.h>
-#include <soc/tegra/chip-id.h>
+#include <soc/tegra/fuse.h>
 #include <tegra_virt_storage_spec.h>
 
 struct vmtd_dev {

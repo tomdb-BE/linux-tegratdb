@@ -58,7 +58,7 @@
 extern ULONG eqos_base_addr;
 #include "yregacc.h"
 #include "nvregacc.h"
-#include <soc/tegra/chip-id.h>
+#include <soc/tegra/fuse.h>
 #include <linux/nospec.h>
 
 static INT eqos_status;

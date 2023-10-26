@@ -27,7 +27,7 @@
 #include <linux/version.h>
 #include <linux/uaccess.h>
 
-#include <soc/tegra/chip-id.h>
+#include <soc/tegra/fuse.h>
 
 #include <asm/pgtable.h>
 

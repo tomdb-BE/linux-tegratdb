@@ -29,7 +29,7 @@
 #include <linux/types.h>
 #include <linux/errno.h>
 #include <linux/version.h>
-#include <soc/tegra/chip-id.h>
+#include <soc/tegra/fuse.h>
 #include <crypto/akcipher.h>
 #include <crypto/hash.h>
 #include <crypto/internal/akcipher.h>

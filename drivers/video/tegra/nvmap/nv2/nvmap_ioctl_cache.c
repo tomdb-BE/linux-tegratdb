@@ -24,7 +24,7 @@
 #include <linux/nvmap.h>
 #include <linux/vmalloc.h>
 #include <linux/highmem.h>
-#include <soc/tegra/chip-id.h>
+#include <soc/tegra/fuse.h>
 
 #include <asm/io.h>
 #include <asm/memory.h>

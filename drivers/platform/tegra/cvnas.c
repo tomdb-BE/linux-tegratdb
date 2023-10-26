@@ -35,7 +35,7 @@
 #include <linux/of_reserved_mem.h>
 #include <linux/platform_device.h>
 #include <linux/nvmap_t19x.h>
-#include <soc/tegra/chip-id.h>
+#include <soc/tegra/fuse.h>
 #include <soc/tegra/fuse.h>
 #include <linux/clk-provider.h>
 

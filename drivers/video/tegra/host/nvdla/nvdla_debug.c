@@ -25,7 +25,7 @@
 #include "dla_os_interface.h"
 #include <linux/uaccess.h>
 #include <soc/tegra/fuse.h>
-#include <soc/tegra/chip-id.h>
+#include <soc/tegra/fuse.h>
 
 #include "nvdla/nvdla.h"
 #include "nvdla_debug.h"

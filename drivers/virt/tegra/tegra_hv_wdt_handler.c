@@ -30,7 +30,7 @@
 #include <linux/tegra-ivc.h>
 #include <linux/tegra-ivc-instance.h>
 
-#include <soc/tegra/chip-id.h>
+#include <soc/tegra/fuse.h>
 #include <uapi/linux/nvhv_wdt_handler_ioctl.h>
 
 #define DRV_NAME	"tegra_hv_wdt_handler"

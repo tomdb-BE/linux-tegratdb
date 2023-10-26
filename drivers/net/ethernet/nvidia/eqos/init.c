@@ -54,7 +54,7 @@
 #include <linux/regulator/consumer.h>
 #include <linux/of_device.h>
 #include <linux/of_gpio.h>
-#include <soc/tegra/chip-id.h>
+#include <soc/tegra/fuse.h>
 #include <linux/clk.h>
 #include <linux/reset.h>
 #include <linux/gpio.h>

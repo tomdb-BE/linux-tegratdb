@@ -430,7 +430,7 @@ static int dma_info_to_prot(enum dma_data_direction dir, bool coherent,
 	}
 }
 
-static dma_addr_t iommu_dma_alloc_iova(struct iommu_domain *domain,
+dma_addr_t iommu_dma_alloc_iova(struct iommu_domain *domain,
                 size_t size, u64 dma_limit, struct device *dev)
 {
         struct iommu_dma_cookie *cookie = domain->iova_cookie;
@@ -470,7 +470,7 @@ static dma_addr_t iommu_dma_alloc_iova(struct iommu_domain *domain,
         return (dma_addr_t)iova << shift;
 }
 
-static void iommu_dma_free_iova(struct iommu_dma_cookie *cookie,
+void iommu_dma_free_iova(struct iommu_dma_cookie *cookie,
 		dma_addr_t iova, size_t size, struct iommu_iotlb_gather *gather)
 {
 	struct iova_domain *iovad = &cookie->iovad;

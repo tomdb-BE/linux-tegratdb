@@ -32,7 +32,7 @@
 #include <linux/pinctrl/pinconf-tegra.h>
 #include <linux/regulator/consumer.h>
 #include <linux/of_device.h>
-#include <soc/tegra/chip-id.h>
+#include <soc/tegra/fuse.h>
 #include <linux/pm_domain.h>
 
 #include "tegra210_xbar_alt.h"

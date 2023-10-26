@@ -23,9 +23,9 @@
 #include <linux/tegra-mce.h>
 #include <linux/platform_device.h>
 #include <linux/sysfs.h>
-#include <soc/tegra/chip-id.h>
+#include <soc/tegra/fuse.h>
 #include <uapi/linux/tegra_l3_cache.h>
-#include <soc/tegra/chip-id.h>
+#include <soc/tegra/fuse.h>
 #include <linux/delay.h>
 
 #define MASK GENMASK(15, 12)

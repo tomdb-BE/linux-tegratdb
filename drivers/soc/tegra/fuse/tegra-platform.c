@@ -5,7 +5,7 @@
 
 #include <linux/version.h>
 #include <soc/tegra/fuse.h>
-#include <soc/tegra/chip-id.h>
+#include <soc/tegra/fuse.h>
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 15, 0)
 #include "fuse.h"

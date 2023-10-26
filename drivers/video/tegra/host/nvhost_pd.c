@@ -22,7 +22,7 @@
 #include <linux/slab.h>
 #include <linux/tegra-powergate.h>
 
-#include <soc/tegra/chip-id.h>
+#include <soc/tegra/fuse.h>
 
 #include <trace/events/nvhost.h>
 

@@ -20,7 +20,7 @@
 #include <asm-generic/irq_regs.h>
 #include <asm/system_misc.h>
 #include <soc/tegra/virt/syscalls.h>
-#include <soc/tegra/chip-id.h>
+#include <soc/tegra/fuse.h>
 
 struct tegra_hv_err_ctrl {
 	struct device *dev;

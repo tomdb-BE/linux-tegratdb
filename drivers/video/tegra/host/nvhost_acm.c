@@ -30,7 +30,7 @@
 #include <linux/pm.h>
 #include <linux/pm_runtime.h>
 #include <linux/reset.h>
-#include <soc/tegra/chip-id.h>
+#include <soc/tegra/fuse.h>
 #include <trace/events/nvhost.h>
 #include <linux/tegra_pm_domains.h>
 #include <uapi/linux/nvhost_ioctl.h>

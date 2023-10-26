@@ -19,7 +19,7 @@
 #include <linux/io.h>
 
 #include <linux/tegra-powergate.h>
-#include <soc/tegra/chip-id.h>
+#include <soc/tegra/fuse.h>
 
 #include <linux/platform/tegra/mc.h>
 #if defined(CONFIG_TEGRA_BWMGR)

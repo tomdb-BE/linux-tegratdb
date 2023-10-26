@@ -23,7 +23,7 @@
 #include <linux/slab.h>
 #include <linux/tegra-mce.h>
 
-#include <soc/tegra/chip-id.h>
+#include <soc/tegra/fuse.h>
 
 #include <trace/events/nvmap.h>
 

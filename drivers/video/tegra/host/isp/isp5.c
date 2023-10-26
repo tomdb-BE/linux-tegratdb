@@ -36,7 +36,7 @@
 #include <media/isp_channel.h>
 #include <media/tegra_camera_platform.h>
 #include <soc/tegra/camrtc-capture.h>
-#include <soc/tegra/chip-id.h>
+#include <soc/tegra/fuse.h>
 #include <soc/tegra/fuse.h>
 
 #include "isp5.h"

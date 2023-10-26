@@ -18,7 +18,7 @@
 #include <linux/of_graph.h>
 #include <linux/of_platform.h>
 #include <linux/platform_device.h>
-#include <soc/tegra/chip-id.h>
+#include <soc/tegra/fuse.h>
 
 #include <media/media-entity.h>
 #include <media/v4l2-async.h>
@@ -27,7 +27,7 @@
 #include <media/mc_common.h>
 #include <media/slvs.h>
 
-#include <soc/tegra/chip-id.h>
+#include <soc/tegra/fuse.h>
 
 #include "dev.h"
 #include "linux/nvhost.h"

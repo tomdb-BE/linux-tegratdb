@@ -33,7 +33,7 @@
 #include <linux/iommu.h>
 #include <linux/reset.h>
 #include <linux/platform/tegra/common.h>
-#include <soc/tegra/chip-id.h>
+#include <soc/tegra/fuse.h>
 #include <soc/tegra/fuse.h>
 
 #include "nvhost_syncpt_unit_interface.h"

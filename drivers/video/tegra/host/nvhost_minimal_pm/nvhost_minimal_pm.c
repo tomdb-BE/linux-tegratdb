@@ -27,7 +27,7 @@
 #include <linux/delay.h>
 #include <linux/io.h>
 
-#include <soc/tegra/chip-id.h>
+#include <soc/tegra/fuse.h>
 
 struct register_info {
 	u32 index;

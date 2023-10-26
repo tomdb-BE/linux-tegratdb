@@ -15,7 +15,7 @@
 #include <linux/slab.h>
 #include <linux/version.h>
 
-#include <soc/tegra/chip-id.h>
+#include <soc/tegra/fuse.h>
 
 #include <trace/events/nvmap.h>
 

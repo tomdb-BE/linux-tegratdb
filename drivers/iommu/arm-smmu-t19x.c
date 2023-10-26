@@ -50,7 +50,7 @@
 #include <linux/debugfs.h>
 #include <linux/uaccess.h>
 #include <linux/dma-attrs.h>
-#include <soc/tegra/chip-id.h>
+#include <soc/tegra/fuse.h>
 #include <linux/ktime.h>
 #include <linux/string.h>
 #include <linux/dma-override.h>

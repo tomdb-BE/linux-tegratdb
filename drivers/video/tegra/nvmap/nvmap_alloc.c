@@ -19,7 +19,7 @@
 
 #include <linux/moduleparam.h>
 #include <linux/random.h>
-#include <soc/tegra/chip-id.h>
+#include <soc/tegra/fuse.h>
 #include <trace/events/nvmap.h>
 
 #include "nvmap_priv.h"

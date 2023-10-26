@@ -26,7 +26,7 @@
 #include <linux/kdev_t.h>
 #include <linux/vmalloc.h>
 #include <linux/interrupt.h>
-#include <soc/tegra/chip-id.h>
+#include <soc/tegra/fuse.h>
 #include <linux/platform_device.h>
 #include <linux/of.h>
 #include <linux/of_address.h>

@@ -34,7 +34,7 @@
 #include <linux/errno.h>
 #include <linux/version.h>
 #include <soc/tegra/fuse.h>
-#include <soc/tegra/chip-id.h>
+#include <soc/tegra/fuse.h>
 #include <soc/tegra/ahb.h>
 #include <crypto/scatterwalk.h>
 #include <soc/tegra/pmc.h>

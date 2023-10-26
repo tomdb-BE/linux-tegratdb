@@ -43,7 +43,7 @@
 /*!@file: eqos_dev.c
  * @brief: Driver functions.
  */
-#include <soc/tegra/chip-id.h>
+#include <soc/tegra/fuse.h>
 #include <linux/clk.h>
 #include <linux/reset.h>
 #include <linux/tegra_prod.h>

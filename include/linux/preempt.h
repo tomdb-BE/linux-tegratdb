@@ -9,6 +9,7 @@
 
 #include <linux/linkage.h>
 #include <linux/list.h>
+#include <linux/irqflags.h>
 
 /*
  * We put the hardirq and softirq counter into the preemption

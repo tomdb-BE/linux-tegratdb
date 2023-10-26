@@ -1,7 +1,7 @@
  /*
  * Denver15 Uncore PMU support
  *
- * Copyright (c) 2016, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2016-2019, NVIDIA CORPORATION.  All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
@@ -22,7 +22,6 @@
 * perf events refactored include structure starting with 4.4
 * This driver is only valid with kernel version 4.4 and greater
 */
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 4, 0)
 #include <asm/irq_regs.h>
 
 #include <linux/of.h>
@@ -30,8 +29,12 @@
 #include <linux/platform_device.h>
 #include <linux/tegra-mce.h>
 #include <linux/platform/tegra/tegra18_cpu_map.h>
+#include "carmel_pmu.h"
 
 #include "dmce_perfmon.h"
+
+#define NUM_L2S         0x4
+#define UNIT_CTRS     0x2
 
 #define DENVERPMU_MAX_HWEVENTS		8
 
@@ -47,7 +50,6 @@
 #define DENVER_EVTYPE_MASK	0x00000d00
 #define DENVER_EVTYPE_EVENT_ID	0x0ff
 
-static DEFINE_PER_CPU(struct pmu_hw_events, cpu_hw_events);
 
 #define to_arm_pmu(p) (container_of(p, struct arm_pmu, pmu))
 
@@ -101,6 +103,27 @@ enum denver_uncore_perf_types {
 #define ARMV8_EXCLUDE_EL1	(1 << 31)
 #define ARMV8_EXCLUDE_EL0	(1 << 30)
 #define ARMV8_INCLUDE_EL2	(1 << 27)
+
+/*
+struct uncore_unit {
+        u32 unit_id;
+        u32 nv_pmselr;
+        struct list_head next;
+        struct perf_event *events[UNIT_CTRS];
+        DECLARE_BITMAP(used_ctrs, UNIT_CTRS);
+};
+
+
+struct uncore_pmu {
+        struct platform_device *pdev;
+        struct pmu pmu;
+        struct uncore_unit clusters[NUM_L2S];
+        struct uncore_unit scf;
+        struct list_head units;
+        DECLARE_BITMAP(used_units, NUM_L2S + 1);
+        struct uncore_unit *cur_unit;
+};
+*/
 
 static struct dmce_perfmon_cnt_info denver_uncore_event[DENVER_MAX_UNCORE_CNTS];
 
@@ -445,7 +468,7 @@ static void denver15pmu_disable_event(struct perf_event *event)
 
 	raw_spin_unlock_irqrestore(&events->pmu_lock, flags);
 }
-
+/*
 static irqreturn_t denver15pmu_handle_irq(int irq_num, void *dev)
 {
 	u32 pmovsr;
@@ -455,20 +478,11 @@ static irqreturn_t denver15pmu_handle_irq(int irq_num, void *dev)
 	struct pt_regs *regs;
 	int idx;
 
-	/*
-	 * Get and reset the IRQ flags
-	 */
 	pmovsr = denver15pmu_getreset_flags();
 
-	/*
-	 * Did an overflow occur?
-	 */
 	if (!denver15pmu_has_overflowed(pmovsr))
 		return IRQ_NONE;
 
-	/*
-	 * Handle the counter(s) overflow(s)
-	 */
 	regs = get_irq_regs();
 
 	cpuc = this_cpu_ptr(&cpu_hw_events);
@@ -476,14 +490,9 @@ static irqreturn_t denver15pmu_handle_irq(int irq_num, void *dev)
 		struct perf_event *event = cpuc->events[idx];
 		struct hw_perf_event *hwc;
 
-		/* Ignore if we don't have an event. */
 		if (!event)
 			continue;
 
-		/*
-		 * We have a single interrupt for all counters. Check that
-		 * each counter has overflowed before we process it.
-		 */
 		if (!denver15pmu_counter_has_overflowed(pmovsr, idx))
 			continue;
 
@@ -496,18 +505,11 @@ static irqreturn_t denver15pmu_handle_irq(int irq_num, void *dev)
 		if (perf_event_overflow(event, &data, regs))
 			uncore_pmu->disable(event);
 	}
-
-	/*
-	 * Handle the pending perf events.
-	 *
-	 * Note: this call *must* be run with interrupts disabled. For
-	 * platforms that can have the PMU interrupts raised as an NMI, this
-	 * will not work.
-	 */
 	irq_work_run();
 
-	return IRQ_HANDLED;
+	return  IRQ_RETVAL(0);
 }
+*/
 
 static void denver15pmu_start(struct arm_pmu *uncore_pmu)
 {
@@ -612,20 +614,16 @@ static int denver_pmu_map_event(struct perf_event *event)
 
 static int denver15_uncore_pmu_init(struct arm_pmu *uncore_pmu)
 {
-	uncore_pmu->handle_irq		= denver15pmu_handle_irq,
-	uncore_pmu->enable		= denver15pmu_enable_event,
-	uncore_pmu->disable		= denver15pmu_disable_event,
-	uncore_pmu->read_counter	= denver15pmu_read_counter,
-	uncore_pmu->write_counter	= denver15pmu_write_counter,
-	uncore_pmu->get_event_idx	= denver15pmu_get_event_idx,
-	uncore_pmu->start		= denver15pmu_start,
-	uncore_pmu->stop		= denver15pmu_stop,
-	uncore_pmu->reset		= denver15pmu_reset,
-	uncore_pmu->max_period		= (1LLU << 32) - 1,
-	uncore_pmu->set_event_filter	= denver15pmu_set_event_filter;
-	uncore_pmu->name		= "denver15_uncore_pmu";
-	uncore_pmu->map_event		= denver_pmu_map_event;
-	uncore_pmu->num_events		= DENVER_MAX_UNCORE_CNTS + 1;
+		uncore_pmu->enable		= denver15pmu_enable_event;
+		uncore_pmu->disable		= denver15pmu_disable_event;
+		uncore_pmu->get_event_idx	= denver15pmu_get_event_idx;
+		uncore_pmu->start		= denver15pmu_start;
+		uncore_pmu->stop		= denver15pmu_stop;
+		uncore_pmu->reset		= denver15pmu_reset;
+		uncore_pmu->set_event_filter	= denver15pmu_set_event_filter;
+		uncore_pmu->name		= "denver15_uncore_pmu";
+		uncore_pmu->map_event		= denver_pmu_map_event;
+		uncore_pmu->num_events		= DENVER_MAX_UNCORE_CNTS + 1;
 	return 0;
 }
 
@@ -652,4 +650,3 @@ static int __init register_pmu_driver(void)
 	return platform_driver_register(&denverpmu_driver);
 }
 device_initcall(register_pmu_driver);
-#endif

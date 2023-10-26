@@ -32,7 +32,7 @@
 #include <linux/tegra_pm_domains.h>
 #include <linux/platform/tegra/tegra_mc.h>
 
-#include <soc/tegra/chip-id.h>
+#include <soc/tegra/fuse.h>
 
 #include "dev.h"
 #include "tsec.h"

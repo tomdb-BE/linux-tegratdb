@@ -31,7 +31,7 @@
 #include <linux/syscore_ops.h>
 #include <linux/uaccess.h>
 #include <linux/watchdog.h>
-#include <soc/tegra/chip-id.h>
+#include <soc/tegra/fuse.h>
 #include <soc/tegra/pmc.h>
 
 /* The total expiry count of Tegra WDTs supported by HW */

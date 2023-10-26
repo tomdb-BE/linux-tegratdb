@@ -28,7 +28,7 @@
 #include <linux/moduleparam.h>
 #include <linux/nvmap.h>
 #include <linux/slab.h>
-#include <soc/tegra/chip-id.h>
+#include <soc/tegra/fuse.h>
 
 #include <asm/pgtable.h>
 

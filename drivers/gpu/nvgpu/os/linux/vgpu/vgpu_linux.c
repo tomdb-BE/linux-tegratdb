@@ -22,7 +22,7 @@
 #include <linux/pm_runtime.h>
 #include <linux/pm_qos.h>
 #include <linux/platform_device.h>
-#include <soc/tegra/chip-id.h>
+#include <soc/tegra/fuse.h>
 
 #include <nvgpu/kmem.h>
 #include <nvgpu/bug.h>

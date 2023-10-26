@@ -22,7 +22,7 @@
 #include <linux/errno.h>
 #include <linux/topology.h>
 
-#include <soc/tegra/chip-id.h>
+#include <soc/tegra/fuse.h>
 
 #include <asm/sysreg.h>
 

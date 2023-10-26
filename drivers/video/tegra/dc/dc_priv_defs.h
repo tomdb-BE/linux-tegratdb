@@ -31,7 +31,7 @@
 #include <linux/nvhost.h>
 #include <linux/types.h>
 #include <linux/clk/tegra.h>
-#include <soc/tegra/chip-id.h>
+#include <soc/tegra/fuse.h>
 #include <linux/reset.h>
 #include <uapi/video/tegra_dc_ext.h>
 #include <linux/platform/tegra/isomgr.h>

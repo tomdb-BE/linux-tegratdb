@@ -23,7 +23,7 @@
 #include <linux/string.h>
 #include <soc/tegra/pmc.h>
 #include <trace/events/camera_common.h>
-#include <soc/tegra/chip-id.h>
+#include <soc/tegra/fuse.h>
 #include <soc/tegra/tegra-i2c-rtcpu.h>
 
 #include <asm/barrier.h>

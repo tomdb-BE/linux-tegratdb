@@ -11,7 +11,7 @@
  * more details.
  */
 
-#include <soc/tegra/chip-id.h>
+#include <soc/tegra/fuse.h>
 #include <soc/tegra/fuse.h>
 #include <soc/tegra/tegra_bpmp.h>
 #ifdef CONFIG_TEGRA_HV_MANAGER

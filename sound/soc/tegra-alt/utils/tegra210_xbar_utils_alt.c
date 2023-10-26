@@ -24,7 +24,7 @@
 #include <linux/platform_device.h>
 #include <linux/pm_runtime.h>
 #include <linux/regmap.h>
-#include <soc/tegra/chip-id.h>
+#include <soc/tegra/fuse.h>
 #include <sound/soc.h>
 #include <linux/clk/tegra.h>
 #include "tegra210_xbar_alt.h"

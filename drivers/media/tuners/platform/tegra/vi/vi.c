@@ -27,7 +27,7 @@
 #include <linux/of_device.h>
 #include <linux/of_platform.h>
 #include <linux/clk/tegra.h>
-#include <soc/tegra/chip-id.h>
+#include <soc/tegra/fuse.h>
 #include <linux/tegra_pm_domains.h>
 #include <linux/debugfs.h>
 #include <linux/slab.h>

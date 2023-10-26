@@ -17,7 +17,7 @@
 
 #include "nvmap_priv.h"
 #include <linux/tegra-mce.h>
-#include <soc/tegra/chip-id.h>
+#include <soc/tegra/fuse.h>
 
 static void nvmap_roc_flush_cache(void)
 {

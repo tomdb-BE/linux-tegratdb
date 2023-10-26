@@ -28,7 +28,7 @@
 #include <scsi/scsi_device.h>
 #include <scsi/scsi_cmnd.h>
 #include <soc/tegra/pmc.h>
-#include <soc/tegra/chip-id.h>
+#include <soc/tegra/fuse.h>
 #include <linux/tegra_prod.h>
 #include <linux/pm.h>
 #include <linux/pm_runtime.h>

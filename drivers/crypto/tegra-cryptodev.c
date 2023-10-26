@@ -31,7 +31,7 @@
 #include <linux/scatterlist.h>
 #include <linux/uaccess.h>
 #include <linux/nospec.h>
-#include <soc/tegra/chip-id.h>
+#include <soc/tegra/fuse.h>
 #include <linux/mutex.h>
 #include <crypto/rng.h>
 #include <crypto/hash.h>

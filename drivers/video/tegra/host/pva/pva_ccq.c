@@ -21,7 +21,7 @@
 #include <linux/nvhost.h>
 #include <linux/delay.h>
 
-#include <soc/tegra/chip-id.h>
+#include <soc/tegra/fuse.h>
 
 #include "dev.h"
 #include "pva.h"

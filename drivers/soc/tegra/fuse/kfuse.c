@@ -28,7 +28,7 @@
 #include <linux/of_device.h>
 #include <linux/version.h>
 #if KERNEL_VERSION(4, 15, 0) > LINUX_VERSION_CODE
-#include <soc/tegra/chip-id.h>
+#include <soc/tegra/fuse.h>
 #else
 #include <soc/tegra/fuse.h>
 #endif

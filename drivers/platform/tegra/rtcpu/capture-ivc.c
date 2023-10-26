@@ -1,5 +1,6 @@
 /*
- * Capture IVC driver
+ * @file drivers/platform/tegra/rtcpu/capture-ivc.c
+ * @brief Capture IVC driver
  *
  * Copyright (c) 2017-2022 NVIDIA Corporation.  All rights reserved.
  *
@@ -23,72 +24,14 @@
 #include <linux/platform_device.h>
 #include <linux/of.h>
 #include <linux/of_device.h>
+#include <linux/pm_runtime.h>
 #include <linux/tegra-ivc.h>
 #include <linux/tegra-ivc-bus.h>
 #include <linux/nospec.h>
-#include <linux/semaphore.h>
-#include <linux/kthread.h>
 
 #include <asm/barrier.h>
 
-#include <soc/tegra/camrtc-capture-messages.h>
-
-/* Referred from capture-scheduler.c defined in rtcpu-fw */
-#define NUM_CAPTURE_CHANNELS 64
-
-/* Temporary ids for the clients whose channel-id is not yet allocated */
-#define NUM_CAPTURE_TRANSACTION_IDS 64
-
-#define TOTAL_CHANNELS (NUM_CAPTURE_CHANNELS + NUM_CAPTURE_TRANSACTION_IDS)
-#define TRANS_ID_START_IDX NUM_CAPTURE_CHANNELS
-
-/* Temporary csi channel-id */
-#define CSI_TEMP_CHANNEL_ID 65
-
-/* Timeout for acquiring channel-id */
-#define TIMEOUT_ACQUIRE_CHANNEL_ID 120
-
-struct tegra_capture_ivc_cb_ctx {
-	struct list_head node;
-	tegra_capture_ivc_cb_func cb_func;
-	const void *priv_context;
-	struct semaphore sem_ch;
-};
-
-struct tegra_capture_ivc {
-	struct tegra_ivc_channel *chan;
-	struct mutex cb_ctx_lock;
-	struct mutex ivc_wr_lock;
-	struct kthread_work work;
-	struct kthread_worker ivc_worker;
-	struct task_struct *ivc_kthread;
-	wait_queue_head_t write_q;
-	struct tegra_capture_ivc_cb_ctx cb_ctx[TOTAL_CHANNELS];
-	spinlock_t avl_ctx_list_lock;
-	struct list_head avl_ctx_list;
-};
-
-/*
- * Referred from CAPTURE_MSG_HEADER structure defined
- * in camrtc-capture-messages.h, in rtcpu and UMD.
- */
-struct tegra_capture_ivc_msg_header {
-	uint32_t msg_id;
-	union {
-		uint32_t channel_id;
-		uint32_t transaction;
-	};
-} __aligned(8);
-
-/*
- * Referred from CAPTURE_CONTROL_MSG and CAPTURE_MSG structures defined
- * in camrtc-capture-messages.h, in rtcpu and UMD. Only exception is,
- * the msg-id specific structures are opaque here.
- */
-struct tegra_capture_ivc_resp {
-	struct tegra_capture_ivc_msg_header header;
-	void *resp;
-};
+#include "capture-ivc-priv.h"
 
 static int tegra_capture_ivc_tx(struct tegra_capture_ivc *civc,
 				const void *req, size_t len)
@@ -117,35 +60,6 @@ static int tegra_capture_ivc_tx(struct tegra_capture_ivc *civc,
 
 	return ret;
 }
-
-static struct tegra_capture_ivc *__scivc_control;
-static struct tegra_capture_ivc *__scivc_capture;
-static int tegra_capture_ivc_can_read(struct tegra_capture_ivc *civc)
-{
-	struct tegra_ivc_channel *chan = civc->chan;
-
-	return tegra_ivc_can_read(&chan->ivc);
-}
-
-int tegra_capture_ivc_capture_control_can_read(void)
-{
-
-	if (WARN_ON(__scivc_control == NULL))
-		return -ENODEV;
-
-	return tegra_capture_ivc_can_read(__scivc_control);
-}
-EXPORT_SYMBOL(tegra_capture_ivc_capture_control_can_read);
-
-int tegra_capture_ivc_capture_status_can_read(void)
-{
-
-	if (WARN_ON(__scivc_capture == NULL))
-		return -ENODEV;
-
-	return tegra_capture_ivc_can_read(__scivc_capture);
-}
-EXPORT_SYMBOL(tegra_capture_ivc_capture_status_can_read);
 
 int tegra_capture_ivc_control_submit(const void *control_desc, size_t len)
 {
@@ -251,20 +165,6 @@ int tegra_capture_ivc_notify_chan_id(uint32_t chan_id, uint32_t trans_id)
 
 	civc = __scivc_control;
 
-	/* WAR: Keep semaphore down with 2 seconds timeout for chan_id
-	 * until it unregisters the callback. It is observed that in
-	 * multiple sessions scenario, on RELEASE call, RCE freed the
-	 * chan_id, but the callback is not unregistered yet. In meantime,
-	 * a new SETUP request arrived and RCE allocated the same chan_id.
-	 * while trying to update the callback, it hits channel-context busy
-	 * errors. 2 seconds timeout is added based on experiments with the
-	 * test app.
-	 */
-	if (down_timeout(&civc->cb_ctx[chan_id].sem_ch,
-			TIMEOUT_ACQUIRE_CHANNEL_ID)) {
-		return -EBUSY;
-	}
-
 	mutex_lock(&civc->cb_ctx_lock);
 
 	if (WARN(civc->cb_ctx[trans_id].cb_func == NULL,
@@ -369,7 +269,6 @@ int tegra_capture_ivc_unregister_control_cb(uint32_t id)
 	civc->cb_ctx[id].priv_context = NULL;
 
 	mutex_unlock(&civc->cb_ctx_lock);
-	up(&civc->cb_ctx[id].sem_ch);
 
 	/*
 	 * If it's trans_id, client encountered an error before or during
@@ -421,48 +320,63 @@ int tegra_capture_ivc_unregister_capture_cb(uint32_t chan_id)
 }
 EXPORT_SYMBOL(tegra_capture_ivc_unregister_capture_cb);
 
-static void tegra_capture_ivc_worker(struct kthread_work *work)
+static inline void tegra_capture_ivc_recv_msg(
+	struct tegra_capture_ivc *civc,
+	uint32_t id,
+	const struct tegra_capture_ivc_resp *msg)
 {
-	struct tegra_capture_ivc *civc = container_of(work,
-					struct tegra_capture_ivc, work);
-	struct tegra_ivc_channel *chan = civc->chan;
+	struct device *dev = &civc->chan->dev;
 
-	WARN_ON(!chan->is_ready);
+	/* Check if callback function available */
+	if (unlikely(!civc->cb_ctx[id].cb_func)) {
+		dev_dbg(dev, "No callback for id %u\n", id);
+	} else {
+		/* Invoke client callback. */
+		civc->cb_ctx[id].cb_func(msg, civc->cb_ctx[id].priv_context);
+	}
+}
 
-	while (tegra_ivc_can_read(&chan->ivc)) {
-		const struct tegra_capture_ivc_resp *msg =
-			tegra_ivc_read_get_next_frame(&chan->ivc);
-		uint32_t id = msg->header.channel_id;
+static inline void tegra_capture_ivc_recv(struct tegra_capture_ivc *civc)
+{
+	struct ivc *ivc = &civc->chan->ivc;
+	const struct tegra_capture_ivc_resp *msg;
+	uint32_t id;
+
+	while (tegra_ivc_can_read(ivc)) {
+		msg = tegra_ivc_read_get_next_frame(ivc);
+		id = msg->header.channel_id;
 
 		/* Check if message is valid */
-		if (WARN(id >= TOTAL_CHANNELS, "Invalid rtcpu response id %u", id))
-			goto skip;
-
-		id = array_index_nospec(id, TOTAL_CHANNELS);
-
-		/* Check if callback function available */
-		if (unlikely(!civc->cb_ctx[id].cb_func)) {
-			dev_dbg(&chan->dev, "No callback for id %u\n", id);
-			goto skip;
+		if (!WARN(id >= TOTAL_CHANNELS, "Invalid rtcpu response id %u", id)) {
+			id = array_index_nospec(id, TOTAL_CHANNELS);
+			tegra_capture_ivc_recv_msg(civc, id, msg);
 		}
 
-		/* WAR: Skip the callback if channel-id is 65, and msg-id is
-		 * greater than CAPTURE_CHANNEL_ISP_RELEASE_RESP. Channel id
-		 * 65 is used for csi and it is specific to v4l2.
-		 * TODO: Bug 200619454
-		 */
-		/* Invoke client callback.*/
-		if (msg->header.msg_id >= CAPTURE_CHANNEL_ISP_RELEASE_RESP &&
-			id == CSI_TEMP_CHANNEL_ID) {
-			dev_err(&chan->dev,
-				"No callback found for msg id: 0x%x",
-				msg->header.msg_id);
-		} else {
-			civc->cb_ctx[id].cb_func(msg,
-				civc->cb_ctx[id].priv_context);
-		}
-skip:
-		tegra_ivc_read_advance(&chan->ivc);
+		tegra_ivc_read_advance(ivc);
+	}
+}
+
+static void tegra_capture_ivc_worker(struct work_struct *work)
+{
+	struct tegra_capture_ivc *civc;
+	struct tegra_ivc_channel *chan;
+
+	civc = container_of(work, struct tegra_capture_ivc, work);
+	chan = civc->chan;
+
+	/*
+	 * Do not process IVC events if worker gets woken up while
+	 * this channel is suspended.  There is a Christmas tree
+	 * notify when RCE resumes and IVC bus gets set up.
+	 */
+	if (pm_runtime_get_if_in_use(&chan->dev) > 0) {
+		WARN_ON(!chan->is_ready);
+
+		tegra_capture_ivc_recv(civc);
+
+		pm_runtime_put(&chan->dev);
+	} else {
+		dev_dbg(&chan->dev, "extra wakeup");
 	}
 }
 
@@ -472,7 +386,7 @@ static void tegra_capture_ivc_notify(struct tegra_ivc_channel *chan)
 
 	/* Only 1 thread can wait on write_q, rest wait for write_lock */
 	wake_up(&civc->write_q);
-	kthread_queue_work(&civc->ivc_worker, &civc->work);
+	schedule_work(&civc->work);
 }
 
 #define NV(x) "nvidia," #x
@@ -484,8 +398,6 @@ static int tegra_capture_ivc_probe(struct tegra_ivc_channel *chan)
 	const char *service;
 	int ret;
 	uint32_t i;
-	u32 prio = 0;
-	struct sched_param sparm;
 
 	civc = devm_kzalloc(dev, (sizeof(*civc)), GFP_KERNEL);
 	if (unlikely(civc == NULL))
@@ -498,34 +410,13 @@ static int tegra_capture_ivc_probe(struct tegra_ivc_channel *chan)
 		return ret;
 	}
 
-	if (of_property_read_u32(dev->of_node, NV(priority), &prio)) {
-		dev_info(dev, "no priority specified, using 99 as default\n");
-		prio = 99;
-	}
-	sparm.sched_priority = prio;
-
 	civc->chan = chan;
 
 	mutex_init(&civc->cb_ctx_lock);
 	mutex_init(&civc->ivc_wr_lock);
 
-	for (i = 0; i < TOTAL_CHANNELS; i++)
-		sema_init(&civc->cb_ctx[i].sem_ch, 1);
-
 	/* Initialize ivc_work */
-	kthread_init_work(&civc->work, tegra_capture_ivc_worker);
-
-	kthread_init_worker(&civc->ivc_worker);
-
-	civc->ivc_kthread = kthread_create(&kthread_worker_fn,
-			&civc->ivc_worker, service);
-	if (unlikely(IS_ERR(civc->ivc_kthread))) {
-		dev_err(dev, "Cannot allocate ivc worker thread\n");
-		ret = PTR_ERR(civc->ivc_kthread);
-		goto err;
-	}
-	sched_setscheduler(civc->ivc_kthread, SCHED_RR, &sparm);
-	wake_up_process(civc->ivc_kthread);
+	INIT_WORK(&civc->work, tegra_capture_ivc_worker);
 
 	/* Initialize wait queue */
 	init_waitqueue_head(&civc->write_q);
@@ -541,44 +432,33 @@ static int tegra_capture_ivc_probe(struct tegra_ivc_channel *chan)
 	tegra_ivc_channel_set_drvdata(chan, civc);
 
 	if (!strcmp("capture-control", service)) {
-		if (WARN_ON(__scivc_control != NULL)) {
-			ret = -EEXIST;
-			goto err_service;
-		}
+		if (WARN_ON(__scivc_control != NULL))
+			return -EEXIST;
 		__scivc_control = civc;
 	} else if (!strcmp("capture", service)) {
-		if (WARN_ON(__scivc_capture != NULL)) {
-			ret = -EEXIST;
-			goto err_service;
-		}
+		if (WARN_ON(__scivc_capture != NULL))
+			return -EEXIST;
 		__scivc_capture = civc;
 	} else {
 		dev_err(dev, "Unknown ivc channel %s\n", service);
-		ret = -EINVAL;
-		goto err_service;
+		return -EINVAL;
 	}
 
 	return 0;
-
-err_service:
-	kthread_stop(civc->ivc_kthread);
-err:
-	return ret;
 }
 
 static void tegra_capture_ivc_remove(struct tegra_ivc_channel *chan)
 {
 	struct tegra_capture_ivc *civc = tegra_ivc_channel_get_drvdata(chan);
 
-	kthread_flush_worker(&civc->ivc_worker);
-	kthread_stop(civc->ivc_kthread);
+	cancel_work_sync(&civc->work);
 
 	if (__scivc_control == civc)
 		__scivc_control = NULL;
 	else if (__scivc_capture == civc)
 		__scivc_capture = NULL;
 	else
-		dev_WARN(&chan->dev, "Unknown ivc channel\n");
+		dev_warn(&chan->dev, "Unknown ivc channel\n");
 }
 
 static struct of_device_id tegra_capture_ivc_channel_of_match[] = {

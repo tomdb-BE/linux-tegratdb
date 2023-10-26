@@ -37,7 +37,7 @@
 #include "board.h"
 #include <linux/platform/tegra/common.h>
 
-#include <soc/tegra/chip-id.h>
+#include <soc/tegra/fuse.h>
 #if IS_ENABLED(CONFIG_TEGRA_VIRTUALIZATION)
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 4, 0)
 #include <soc/tegra/virt/syscalls.h>

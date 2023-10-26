@@ -28,7 +28,7 @@
 #include <linux/export.h>
 #include <linux/firmware.h>
 #include <linux/dma-mapping.h>
-#include <soc/tegra/chip-id.h>
+#include <soc/tegra/fuse.h>
 #include <linux/anon_inodes.h>
 #include <linux/crc32.h>
 
