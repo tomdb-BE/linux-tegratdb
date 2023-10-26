@@ -66,7 +66,7 @@ struct tegra_hv_ivm_cookie {
 	void *reserved;
 };
 
-/* FIXME: overrides to avoid conflict with upstreamed ivc APIs */
+/* FIXME: overrides to avoid conflict with upstreamed ivc APIs
 #define tegra_ivc_can_read nv_tegra_ivc_can_read
 #define tegra_ivc_can_write nv_tegra_ivc_can_write
 #define tegra_ivc_tx_empty nv_tegra_ivc_tx_empty
@@ -81,7 +81,7 @@ struct tegra_hv_ivm_cookie {
 #define tegra_ivc_write_advance nv_tegra_ivc_write_advance
 #define tegra_ivc_channel_reset nv_tegra_ivc_channel_reset
 #define tegra_ivc_channel_notified nv_tegra_ivc_channel_notified
-
+*/
 int tegra_ivc_write(struct ivc *ivc, const void *buf, size_t size);
 int tegra_ivc_read(struct ivc *ivc, void *buf, size_t size);
 int tegra_ivc_can_read(struct ivc *ivc);
