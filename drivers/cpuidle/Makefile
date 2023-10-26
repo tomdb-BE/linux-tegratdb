@@ -24,13 +24,6 @@ obj-$(CONFIG_ARM_CPUIDLE)		+= cpuidle-arm.o
 obj-$(CONFIG_ARM_PSCI_CPUIDLE)		+= cpuidle-psci.o
 obj-$(CONFIG_ARM_PSCI_CPUIDLE_DOMAIN)	+= cpuidle-psci-domain.o
 obj-$(CONFIG_ARM_TEGRA_CPUIDLE)		+= cpuidle-tegra.o
-obj-$(CONFIG_CPU_IDLE_TEGRA18X)         += cpuidle-tegra18x.o
-
-ifdef CONFIG_ARCH_TEGRA_19x_SOC
-obj-$(CONFIG_CPU_IDLE_TEGRA19X)         += cpuidle-tegra19x.o
-endif
-
-
 obj-$(CONFIG_ARM_QCOM_SPM_CPUIDLE)	+= cpuidle-qcom-spm.o
 
 ###############################################################################

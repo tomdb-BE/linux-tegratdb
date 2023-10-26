@@ -291,7 +291,6 @@ static void ufshcd_scsi_block_requests(struct ufs_hba *hba)
 		scsi_block_requests(hba->host);
 }
 
-/*
 static void ufshcd_add_cmd_upiu_trace(struct ufs_hba *hba, unsigned int tag,
 				      enum ufs_trace_str_t str_t)
 {
@@ -309,7 +308,6 @@ static void ufshcd_add_cmd_upiu_trace(struct ufs_hba *hba, unsigned int tag,
 	trace_ufshcd_upiu(dev_name(hba->dev), str_t, header, &rq->sc.cdb,
 			  UFS_TSF_CDB);
 }
-*/
 
 static void ufshcd_add_query_upiu_trace(struct ufs_hba *hba,
 					enum ufs_trace_str_t str_t,
@@ -377,7 +375,7 @@ static void ufshcd_add_command_trace(struct ufs_hba *hba, unsigned int tag,
 		return;
 
 	/* trace UPIU also */
-	// ufshcd_add_cmd_upiu_trace(hba, tag, str_t);
+	ufshcd_add_cmd_upiu_trace(hba, tag, str_t);
 	if (!trace_ufshcd_command_enabled())
 		return;
 
@@ -9338,92 +9336,6 @@ static int ufshcd_set_dma_mask(struct ufs_hba *hba)
 }
 
 /**
- * ufshcd_get_refclk_value - get programmed bRefClkFreq value
- * @hba: per-adapter instance
- * @value: variable to store read value
- *
- * Get Refclkfreq value
- */
-int ufshcd_get_refclk_value(struct ufs_hba *hba, u32 *value)
-{
-        return ufshcd_query_attr(hba, UPIU_QUERY_OPCODE_READ_ATTR,
-                        QUERY_ATTR_IDN_REF_CLK_FREQ, 0, 0, value);
-}
-EXPORT_SYMBOL(ufshcd_get_refclk_value);
-
-/**
- * ufshcd_set_refclk_value - Write bRefClkFreq value
- * @hba: per-adapter instance
- * @value: value to be written
- *
- * Set Refclkfreq value
- */
-int ufshcd_set_refclk_value(struct ufs_hba *hba, u32 *value)
-{
-        return ufshcd_query_attr(hba, UPIU_QUERY_OPCODE_WRITE_ATTR,
-                        QUERY_ATTR_IDN_REF_CLK_FREQ, 0, 0, value);
-}
-EXPORT_SYMBOL(ufshcd_set_refclk_value);
-
-/**
- * ufshcd_set_config_desc - Write configuration Descriptor
- * @hba: per-adapter instance
- * @desc_buf: configuration descriptor buffer
- *
- * Write configuration Descriptor
- */
-int ufshcd_set_config_desc(struct ufs_hba *hba, u8 *desc_buf)
-{
-        u32 lun_desc_len = UFS_CONG_DESC_SIZE;
-
-        return  ufshcd_query_descriptor_retry(hba, UPIU_QUERY_OPCODE_WRITE_DESC,
-                QUERY_DESC_IDN_CONFIGURATION, 0, 0, desc_buf, &lun_desc_len);
-}
-EXPORT_SYMBOL(ufshcd_set_config_desc);
-
-/**
- * ufshcd_get_config_desc_lock - Read configuration descriptor lock
- * @hba: per-adapter instance
- * @value: varibale to store read value
- *
- * Read device configuration descriptor lock
- */
-int ufshcd_get_config_desc_lock(struct ufs_hba *hba, u32 *value)
-{
-        return ufshcd_query_attr(hba, UPIU_QUERY_OPCODE_READ_ATTR,
-                        QUERY_ATTR_IDN_CONF_DESC_LOCK, 0, 0, value);
-}
-EXPORT_SYMBOL(ufshcd_get_config_desc_lock);
-
-/**
- * ufshcd_get_bootlun_en_value - get programmed bBootLunEn value
- * @hba: per-adapter instance
- * @value: variable to store read value
- *
- * Get BootLunEn value
- */
-int ufshcd_get_bootlun_en_value(struct ufs_hba *hba, u32 *value)
-{
-        return ufshcd_query_attr(hba, UPIU_QUERY_OPCODE_READ_ATTR,
-                                                         QUERY_ATTR_IDN_BOOT_LU_EN, 0, 0, value);
-}
-EXPORT_SYMBOL(ufshcd_get_bootlun_en_value);
-
-/**
- * ufshcd_set_bootlun_en_value - Write bBootLunEn value
- * @hba: per-adapter instance
- * @value: value to be written
- *
- * Set Refclkfreq value
- */
-int ufshcd_set_bootlun_en_value(struct ufs_hba *hba, u32 *value)
-{
-        return ufshcd_query_attr(hba, UPIU_QUERY_OPCODE_WRITE_ATTR,
-                                                         QUERY_ATTR_IDN_BOOT_LU_EN, 0, 0, value);
-}
-EXPORT_SYMBOL(ufshcd_set_bootlun_en_value);
-
-/**
  * ufshcd_alloc_host - allocate Host Bus Adapter (HBA)
  * @dev: pointer to device handle
  * @hba_handle: driver private handle
@@ -9819,7 +9731,6 @@ static void __exit ufshcd_core_exit(void)
 	ufs_debugfs_exit();
 	scsi_unregister_driver(&ufs_dev_wlun_template.gendrv);
 }
-
 
 module_init(ufshcd_core_init);
 module_exit(ufshcd_core_exit);

@@ -73,15 +73,6 @@ enum {
 /* UFS Version 08h */
 #define MINOR_VERSION_NUM_MASK		UFS_MASK(0xFFFF, 0)
 #define MAJOR_VERSION_NUM_MASK		UFS_MASK(0xFFFF, 16)
-#define UFS_CONG_DESC_SIZE 0xe6 /* confg desc size */
-
-enum {
-        UFSHCI_VERSION_10 = 0x00010000, /* 1.0 */
-        UFSHCI_VERSION_11 = 0x00010100, /* 1.1 */
-        UFSHCI_VERSION_20 = 0x00000200, /* 2.0 */
-        UFSHCI_VERSION_21 = 0x00000210, /* 2.1 */
-        UFSHCI_VERSION_30 = 0x00000300, /* 3.0 */
-};
 
 /*
  * Controller UFSHCI version

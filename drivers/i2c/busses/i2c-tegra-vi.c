@@ -37,7 +37,7 @@
 #include <linux/iopoll.h>
 #include <linux/of_gpio.h>
 #include <linux/i2c-algo-bit.h>
-#include <linux/i2c-gpio.h>
+#include <linux/platform_data/i2c-gpio.h>
 #include <linux/tegra_prod.h>
 #include <linux/dmaengine.h>
 #include <linux/dma-mapping.h>
@@ -2105,9 +2105,9 @@ static int tegra_i2c_probe(struct platform_device *pdev)
 	i2c_dev->adapter.dev.parent = &pdev->dev;
 	i2c_dev->adapter.nr = pdev->id;
 	i2c_dev->adapter.dev.of_node = pdev->dev.of_node;
-	i2c_dev->bri.scl_gpio = i2c_dev->scl_gpio;
-	i2c_dev->bri.sda_gpio = i2c_dev->sda_gpio;
-	i2c_dev->bri.recover_bus = i2c_generic_gpio_recovery;
+	//i2c_dev->bri.scl_gpio = i2c_dev->scl_gpio;
+	//i2c_dev->bri.sda_gpio = i2c_dev->sda_gpio;
+	i2c_dev->bri.recover_bus = i2c_generic_scl_recovery;
 	i2c_dev->adapter.bus_recovery_info = &i2c_dev->bri;
 
 	ret = i2c_add_numbered_adapter(&i2c_dev->adapter);
@@ -2219,7 +2219,7 @@ static SIMPLE_DEV_PM_OPS(tegra_i2c_pm, tegra_i2c_suspend, tegra_i2c_resume);
 static struct platform_driver tegra_i2c_driver = {
 	.probe   = tegra_i2c_probe,
 	.remove  = tegra_i2c_remove,
-	.late_shutdown = tegra_i2c_shutdown,
+	.shutdown = tegra_i2c_shutdown,
 	.driver  = {
 		.name  = "tegra-vii2c",
 		.of_match_table = tegra_i2c_of_match,

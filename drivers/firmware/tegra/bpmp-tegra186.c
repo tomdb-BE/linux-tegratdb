@@ -3,14 +3,12 @@
  * Copyright (c) 2018, NVIDIA CORPORATION.
  */
 
-#include <linux/delay.h>
 #include <linux/genalloc.h>
 #include <linux/mailbox_client.h>
 #include <linux/platform_device.h>
 
 #include <soc/tegra/bpmp.h>
 #include <soc/tegra/bpmp-abi.h>
-#include <soc/tegra/fuse.h>
 #include <soc/tegra/ivc.h>
 
 #include "bpmp-private.h"
@@ -146,10 +144,8 @@ static void tegra186_bpmp_channel_reset(struct tegra_bpmp_channel *channel)
 	tegra_ivc_reset(channel->ivc);
 
 	/* sync the channel state with BPMP */
-	while (tegra_ivc_notified(channel->ivc)) {
-		if (tegra_platform_is_vdk())
-			usleep_range(100, 500);
-	}
+	while (tegra_ivc_notified(channel->ivc))
+		;
 }
 
 static void tegra186_bpmp_channel_cleanup(struct tegra_bpmp_channel *channel)

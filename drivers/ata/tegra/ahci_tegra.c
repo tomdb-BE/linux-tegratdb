@@ -591,10 +591,7 @@ static void tegra_ahci_unbind(struct work_struct *work)
 
 static char *tegra_ahci_get_disk_name(struct scsi_cmnd *scsicmd)
 {
-	if (scsicmd && scsicmd->request && scsicmd->request->rq_disk)
-		return scsicmd->request->rq_disk->disk_name;
-	else
-		return NULL;
+	return NULL;
 }
 
 /**

@@ -1,275 +1,224 @@
+// SPDX-License-Identifier: GPL-2.0+
 /*
- * SoftDog-platform: A platform based Software Watchdog Device
+ *	SoftDog:	A Software Watchdog Device
  *
- * Copyright (c) 2014-2020, NVIDIA CORPORATION.  All rights reserved.
- *
- * Author: Laxman Dewangan <ldewangan@nvidia.com>
- *
- * Based on the softdog by:
  *	(c) Copyright 1996 Alan Cox <alan@lxorguk.ukuu.org.uk>,
- *	All Rights Reserved.
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ *							All Rights Reserved.
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ *	Neither Alan Cox nor CymruNet Ltd. admit liability nor provide
+ *	warranty for any of this software. This material is provided
+ *	"AS-IS" and at no charge.
+ *
+ *	(c) Copyright 1995    Alan Cox <alan@lxorguk.ukuu.org.uk>
+ *
+ *	Software only watchdog driver. Unlike its big brother the WDT501P
+ *	driver this won't always recover a failed machine.
  */
 
-#include <linux/module.h>
-#include <linux/types.h>
-#include <linux/timer.h>
-#include <linux/watchdog.h>
-#include <linux/notifier.h>
-#include <linux/reboot.h>
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+
+#include <linux/hrtimer.h>
 #include <linux/init.h>
-#include <linux/jiffies.h>
 #include <linux/kernel.h>
-#include <linux/of.h>
-#include <linux/of_device.h>
-#include <linux/platform_device.h>
-#include <linux/platform_device.h>
-#include <linux/slab.h>
+#include <linux/kthread.h>
+#include <linux/module.h>
+#include <linux/moduleparam.h>
+#include <linux/reboot.h>
+#include <linux/types.h>
+#include <linux/watchdog.h>
+#include <linux/workqueue.h>
 
 #define TIMER_MARGIN	60		/* Default is 60 seconds */
-struct softdog_platform_wdt {
-	struct watchdog_device wdt_dev;
-	struct device *dev;
-	unsigned int soft_margin;
-	bool nowayout;
-	int soft_noboot;
-	int soft_panic;
-	struct timer_list watchdog_ticktock;
-	struct notifier_block nb;
-	int is_stopped;
-};
+static unsigned int soft_margin = TIMER_MARGIN;	/* in seconds */
+module_param(soft_margin, uint, 0);
+MODULE_PARM_DESC(soft_margin,
+	"Watchdog soft_margin in seconds. (0 < soft_margin < 65536, default="
+					__MODULE_STRING(TIMER_MARGIN) ")");
 
-/* If the timer expires..  */
-static void softdog_platform_watchdog_fire(unsigned long data)
+static bool nowayout = WATCHDOG_NOWAYOUT;
+module_param(nowayout, bool, 0);
+MODULE_PARM_DESC(nowayout,
+		"Watchdog cannot be stopped once started (default="
+				__MODULE_STRING(WATCHDOG_NOWAYOUT) ")");
+
+static int soft_noboot;
+module_param(soft_noboot, int, 0);
+MODULE_PARM_DESC(soft_noboot,
+	"Softdog action, set to 1 to ignore reboots, 0 to reboot (default=0)");
+
+static int soft_panic;
+module_param(soft_panic, int, 0);
+MODULE_PARM_DESC(soft_panic,
+	"Softdog action, set to 1 to panic, 0 to reboot (default=0)");
+
+static char *soft_reboot_cmd;
+module_param(soft_reboot_cmd, charp, 0000);
+MODULE_PARM_DESC(soft_reboot_cmd,
+	"Set reboot command. Emergency reboot takes place if unset");
+
+static bool soft_active_on_boot;
+module_param(soft_active_on_boot, bool, 0000);
+MODULE_PARM_DESC(soft_active_on_boot,
+	"Set to true to active Softdog on boot (default=false)");
+
+static struct hrtimer softdog_ticktock;
+static struct hrtimer softdog_preticktock;
+
+static int reboot_kthread_fn(void *data)
 {
-	struct softdog_platform_wdt *swdt = (struct softdog_platform_wdt *)data;
+	kernel_restart(soft_reboot_cmd);
+	return -EPERM; /* Should not reach here */
+}
 
-	if (swdt->is_stopped)
-		return;
+static void reboot_work_fn(struct work_struct *unused)
+{
+	kthread_run(reboot_kthread_fn, NULL, "softdog_reboot");
+}
 
-	if (swdt->soft_noboot)
-		dev_crit(swdt->dev, "Triggered - Reboot ignored\n");
-	else if (swdt->soft_panic) {
-		dev_crit(swdt->dev, "Initiating panic\n");
+static enum hrtimer_restart softdog_fire(struct hrtimer *timer)
+{
+	static bool soft_reboot_fired;
+
+	module_put(THIS_MODULE);
+	if (soft_noboot) {
+		pr_crit("Triggered - Reboot ignored\n");
+	} else if (soft_panic) {
+		pr_crit("Initiating panic\n");
 		panic("Software Watchdog Timer expired");
 	} else {
-		dev_crit(swdt->dev, "Initiating system reboot\n");
+		pr_crit("Initiating system reboot\n");
+		if (!soft_reboot_fired && soft_reboot_cmd != NULL) {
+			static DECLARE_WORK(reboot_work, reboot_work_fn);
+			/*
+			 * The 'kernel_restart' is a 'might-sleep' operation.
+			 * Also, executing it in system-wide workqueues blocks
+			 * any driver from using the same workqueue in its
+			 * shutdown callback function. Thus, we should execute
+			 * the 'kernel_restart' in a standalone kernel thread.
+			 * But since starting a kernel thread is also a
+			 * 'might-sleep' operation, so the 'reboot_work' is
+			 * required as a launcher of the kernel thread.
+			 *
+			 * After request the reboot, restart the timer to
+			 * schedule an 'emergency_restart' reboot after
+			 * 'TIMER_MARGIN' seconds. It's because if the softdog
+			 * hangs, it might be because of scheduling issues. And
+			 * if that is the case, both 'schedule_work' and
+			 * 'kernel_restart' may possibly be malfunctional at the
+			 * same time.
+			 */
+			soft_reboot_fired = true;
+			schedule_work(&reboot_work);
+			hrtimer_add_expires_ns(timer,
+					(u64)TIMER_MARGIN * NSEC_PER_SEC);
+
+			return HRTIMER_RESTART;
+		}
 		emergency_restart();
-		dev_crit(swdt->dev, "Reboot didn't ?????\n");
+		pr_crit("Reboot didn't ?????\n");
 	}
+
+	return HRTIMER_NORESTART;
 }
 
-/* Softdog operations */
-static int softdog_platform_ping(struct watchdog_device *wdt)
+static struct watchdog_device softdog_dev;
+
+static enum hrtimer_restart softdog_pretimeout(struct hrtimer *timer)
 {
-	struct softdog_platform_wdt *swdt =  watchdog_get_drvdata(wdt);
+	watchdog_notify_pretimeout(&softdog_dev);
 
-	if (swdt->is_stopped)
-		return 0;
+	return HRTIMER_NORESTART;
+}
 
-	mod_timer(&swdt->watchdog_ticktock, jiffies+(wdt->timeout*HZ));
+static int softdog_ping(struct watchdog_device *w)
+{
+	if (!hrtimer_active(&softdog_ticktock))
+		__module_get(THIS_MODULE);
+	hrtimer_start(&softdog_ticktock, ktime_set(w->timeout, 0),
+		      HRTIMER_MODE_REL);
+
+	if (IS_ENABLED(CONFIG_SOFT_WATCHDOG_PRETIMEOUT)) {
+		if (w->pretimeout)
+			hrtimer_start(&softdog_preticktock,
+				      ktime_set(w->timeout - w->pretimeout, 0),
+				      HRTIMER_MODE_REL);
+		else
+			hrtimer_cancel(&softdog_preticktock);
+	}
+
 	return 0;
 }
 
-static int softdog_platform_start(struct watchdog_device *wdt)
+static int softdog_stop(struct watchdog_device *w)
 {
-	struct softdog_platform_wdt *swdt =  watchdog_get_drvdata(wdt);
+	if (hrtimer_cancel(&softdog_ticktock))
+		module_put(THIS_MODULE);
 
-	swdt->is_stopped = false;
-	mod_timer(&swdt->watchdog_ticktock, jiffies+(wdt->timeout*HZ));
+	if (IS_ENABLED(CONFIG_SOFT_WATCHDOG_PRETIMEOUT))
+		hrtimer_cancel(&softdog_preticktock);
+
 	return 0;
 }
 
-static int softdog_platform_stop(struct watchdog_device *wdt)
-{
-	struct softdog_platform_wdt *swdt =  watchdog_get_drvdata(wdt);
-
-	del_timer_sync(&swdt->watchdog_ticktock);
-	swdt->is_stopped = true;
-	return 0;
-}
-
-static int softdog_platform_set_timeout(struct watchdog_device *wdt,
-	unsigned int t)
-{
-	wdt->timeout = t;
-	return 0;
-}
-
-/* Notifier for system down */
-static int softdog_platform_notify_sys(struct notifier_block *this,
-	unsigned long code, void *ptr)
-{
-	struct softdog_platform_wdt *swdt = container_of(this,
-					struct softdog_platform_wdt, nb);
-
-	if (code == SYS_DOWN || code == SYS_HALT)
-		/* Turn the WDT off */
-		softdog_platform_stop(&swdt->wdt_dev);
-
-	return NOTIFY_DONE;
-}
-
-static struct watchdog_info softdog_platform_info = {
+static struct watchdog_info softdog_info = {
 	.identity = "Software Watchdog",
 	.options = WDIOF_SETTIMEOUT | WDIOF_KEEPALIVEPING | WDIOF_MAGICCLOSE,
 };
 
-static struct watchdog_ops softdog_platform_ops = {
+static const struct watchdog_ops softdog_ops = {
 	.owner = THIS_MODULE,
-	.start = softdog_platform_start,
-	.stop = softdog_platform_stop,
-	.ping = softdog_platform_ping,
-	.set_timeout = softdog_platform_set_timeout,
+	.start = softdog_ping,
+	.stop = softdog_stop,
 };
 
-static int softdog_platform_probe(struct platform_device *pdev)
+static struct watchdog_device softdog_dev = {
+	.info = &softdog_info,
+	.ops = &softdog_ops,
+	.min_timeout = 1,
+	.max_timeout = 65535,
+	.timeout = TIMER_MARGIN,
+};
+
+static int __init softdog_init(void)
 {
-	struct softdog_platform_wdt *swdt;
-	struct device_node *np = pdev->dev.of_node;
-	u32 pval;
 	int ret;
 
-	if (!np) {
-		dev_err(&pdev->dev, "Only DT registration supported\n");
-		return -ENODEV;
+	watchdog_init_timeout(&softdog_dev, soft_margin, NULL);
+	watchdog_set_nowayout(&softdog_dev, nowayout);
+	watchdog_stop_on_reboot(&softdog_dev);
+
+	hrtimer_init(&softdog_ticktock, CLOCK_MONOTONIC, HRTIMER_MODE_REL);
+	softdog_ticktock.function = softdog_fire;
+
+	if (IS_ENABLED(CONFIG_SOFT_WATCHDOG_PRETIMEOUT)) {
+		softdog_info.options |= WDIOF_PRETIMEOUT;
+		hrtimer_init(&softdog_preticktock, CLOCK_MONOTONIC,
+			     HRTIMER_MODE_REL);
+		softdog_preticktock.function = softdog_pretimeout;
 	}
 
-	swdt = devm_kzalloc(&pdev->dev, sizeof(*swdt), GFP_KERNEL);
-	if (!swdt)
-		return -ENOMEM;
+	if (soft_active_on_boot)
+		softdog_ping(&softdog_dev);
 
-	swdt->nowayout = of_property_read_bool(np, "watchdog,nowayout");
-	swdt->soft_noboot = !of_property_read_bool(np, "watchdog,reboot");
-	swdt->soft_panic = of_property_read_bool(np, "watchdog,panic");
-	ret = of_property_read_u32(np, "watchdog,margin", &pval);
-	if (!ret)
-		swdt->soft_margin = pval;
-	else
-		swdt->soft_margin = TIMER_MARGIN;
-	/*
-	 * Check that the soft_margin value is within it's range;
-	 * if not reset to the default
-	 */
-	if (swdt->soft_margin < 1 || swdt->soft_margin > 65535) {
-		dev_err(&pdev->dev,
-			"soft_margin must be 0 to 65536, using %d\n",
-			TIMER_MARGIN);
-		return -EINVAL;
-	}
+	ret = watchdog_register_device(&softdog_dev);
+	if (ret)
+		return ret;
 
-	swdt->wdt_dev.timeout = swdt->soft_margin;
-	swdt->nb.notifier_call = softdog_platform_notify_sys;
-	swdt->dev = &pdev->dev;
-	watchdog_set_nowayout(&swdt->wdt_dev, swdt->nowayout);
-	watchdog_set_drvdata(&swdt->wdt_dev, swdt);
-	platform_set_drvdata(pdev, swdt);
+	pr_info("initialized. soft_noboot=%d soft_margin=%d sec soft_panic=%d (nowayout=%d)\n",
+		soft_noboot, softdog_dev.timeout, soft_panic, nowayout);
+	pr_info("             soft_reboot_cmd=%s soft_active_on_boot=%d\n",
+		soft_reboot_cmd ?: "<not set>", soft_active_on_boot);
 
-	swdt->wdt_dev.info = &softdog_platform_info;
-	swdt->wdt_dev.ops = &softdog_platform_ops;
-	swdt->wdt_dev.min_timeout = 1;
-	swdt->wdt_dev.max_timeout = 0xFFFF;
-
-	setup_timer(&swdt->watchdog_ticktock, softdog_platform_watchdog_fire,
-				(unsigned long)swdt);
-
-	ret = register_reboot_notifier(&swdt->nb);
-	if (ret) {
-		dev_err(&pdev->dev,
-			"cannot register reboot notifier (err=%d)\n", ret);
-		goto timer_del;
-	}
-
-	ret = watchdog_register_device(&swdt->wdt_dev);
-	if (ret) {
-		dev_err(&pdev->dev, "Watchdog register failed: %d\n", ret);
-		goto reboot_unreg;
-	}
-
-	dev_info(&pdev->dev, "Software Watchdog Timer: initialized\n");
-	return 0;
-
-reboot_unreg:
-	unregister_reboot_notifier(&swdt->nb);
-timer_del:
-	softdog_platform_stop(&swdt->wdt_dev);
-	return ret;
-}
-
-static int softdog_platform_remove(struct platform_device *pdev)
-{
-	struct softdog_platform_wdt *swdt = platform_get_drvdata(pdev);
-
-	softdog_platform_stop(&swdt->wdt_dev);
-	watchdog_unregister_device(&swdt->wdt_dev);
-	unregister_reboot_notifier(&swdt->nb);
 	return 0;
 }
+module_init(softdog_init);
 
-static void softdog_platform_shutdown(struct platform_device *pdev)
+static void __exit softdog_exit(void)
 {
-	struct softdog_platform_wdt *swdt = platform_get_drvdata(pdev);
-
-	softdog_platform_stop(&swdt->wdt_dev);
+	watchdog_unregister_device(&softdog_dev);
 }
+module_exit(softdog_exit);
 
-#ifdef CONFIG_PM_SLEEP
-static int softdog_platform_suspend(struct device *dev)
-{
-	struct softdog_platform_wdt *swdt = dev_get_drvdata(dev);
-	int ret;
-
-	ret = softdog_platform_stop(&swdt->wdt_dev);
-	if (ret < 0)
-		dev_err(swdt->dev, "wdt stop failed: %d\n", ret);
-	return 0;
-}
-
-static int softdog_platform_resume(struct device *dev)
-{
-	struct softdog_platform_wdt *swdt = dev_get_drvdata(dev);
-	int ret;
-
-	ret = softdog_platform_start(&swdt->wdt_dev);
-	if (ret < 0)
-		dev_err(swdt->dev, "wdt start failed: %d\n", ret);
-	return 0;
-}
-#endif
-
-static const struct dev_pm_ops softdog_platform_pm_ops = {
-	SET_SYSTEM_SLEEP_PM_OPS(softdog_platform_suspend,
-			softdog_platform_resume)
-};
-
-static struct of_device_id softdog_platform_of_match[] = {
-	{ .compatible = "softdog-platform", },
-	{},
-};
-MODULE_DEVICE_TABLE(of, softdog_platform_of_match);
-
-static struct platform_driver softdog_platform_driver = {
-	.driver = {
-		.name = "softdog-platform",
-		.owner = THIS_MODULE,
-		.of_match_table = softdog_platform_of_match,
-		.pm = &softdog_platform_pm_ops,
-	},
-	.probe = softdog_platform_probe,
-	.remove = softdog_platform_remove,
-	.shutdown = softdog_platform_shutdown,
-};
-
-module_platform_driver(softdog_platform_driver);
-
-MODULE_AUTHOR("Laxman Dewangan <ldewangan@nvidia.com>");
-MODULE_DESCRIPTION("Software Watchdog Platform Device Driver");
-MODULE_LICENSE("GPL v2");
+MODULE_AUTHOR("Alan Cox");
+MODULE_DESCRIPTION("Software Watchdog Device Driver");
+MODULE_LICENSE("GPL");

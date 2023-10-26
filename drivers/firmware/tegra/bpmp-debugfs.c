@@ -1,12 +1,11 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2017-2021, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2017, NVIDIA CORPORATION.  All rights reserved.
  */
 #include <linux/debugfs.h>
 #include <linux/dma-mapping.h>
 #include <linux/slab.h>
 #include <linux/uaccess.h>
-#include <linux/delay.h>
 
 #include <soc/tegra/bpmp.h>
 #include <soc/tegra/bpmp-abi.h>
@@ -130,15 +129,8 @@ static int mrq_debug_open(struct tegra_bpmp *bpmp, const char *name,
 	err = tegra_bpmp_transfer(bpmp, &msg);
 	if (err < 0)
 		return err;
-	else if (msg.rx.ret < 0) {
-		if (msg.rx.ret == -BPMP_EBUSY) {
-			/* Retry if BPMP filesystem was busy, but bail out eventually */
-			return -EBUSY;
-		} else {
-			/* Any other BPMP filesystem error*/
-			return -EINVAL;
-		}
-	}
+	else if (msg.rx.ret < 0)
+		return -EINVAL;
 
 	*len = resp.fop.datalen;
 	*fd = resp.fop.fd;
@@ -304,25 +296,61 @@ static int bpmp_debug_show(struct seq_file *m, void *p)
 	struct file *file = m->private;
 	struct inode *inode = file_inode(file);
 	struct tegra_bpmp *bpmp = inode->i_private;
-	char *databuf = NULL;
 	char fnamebuf[256];
 	const char *filename;
-	uint32_t nbytes = 0;
-	size_t len;
-	int err;
-
-	len = seq_get_buf(m, &databuf);
-	if (!databuf)
-		return -ENOMEM;
+	struct mrq_debug_request req = {
+		.cmd = cpu_to_le32(CMD_DEBUG_READ),
+	};
+	struct mrq_debug_response resp;
+	struct tegra_bpmp_message msg = {
+		.mrq = MRQ_DEBUG,
+		.tx = {
+			.data = &req,
+			.size = sizeof(req),
+		},
+		.rx = {
+			.data = &resp,
+			.size = sizeof(resp),
+		},
+	};
+	uint32_t fd = 0, len = 0;
+	int remaining, err;
 
 	filename = get_filename(bpmp, file, fnamebuf, sizeof(fnamebuf));
 	if (!filename)
 		return -ENOENT;
 
-	err = mrq_debug_read(bpmp, filename, databuf, len, &nbytes);
-	if (!err)
-		seq_commit(m, nbytes);
+	mutex_lock(&bpmp_debug_lock);
+	err = mrq_debug_open(bpmp, filename, &fd, &len, 0);
+	if (err)
+		goto out;
 
+	req.frd.fd = fd;
+	remaining = len;
+
+	while (remaining > 0) {
+		err = tegra_bpmp_transfer(bpmp, &msg);
+		if (err < 0) {
+			goto close;
+		} else if (msg.rx.ret < 0) {
+			err = -EINVAL;
+			goto close;
+		}
+
+		if (resp.frd.readlen > remaining) {
+			pr_err("%s: read data length invalid\n", __func__);
+			err = -EINVAL;
+			goto close;
+		}
+
+		seq_write(m, resp.frd.data, resp.frd.readlen);
+		remaining -= resp.frd.readlen;
+	}
+
+close:
+	err = mrq_debug_close(bpmp, fd);
+out:
+	mutex_unlock(&bpmp_debug_lock);
 	return err;
 }
 
@@ -359,7 +387,7 @@ free_ret:
 
 static int bpmp_debug_open(struct inode *inode, struct file *file)
 {
-	return single_open_size(file, bpmp_debug_show, file, SZ_1M);
+	return single_open_size(file, bpmp_debug_show, file, SZ_256K);
 }
 
 static const struct file_operations bpmp_debug_fops = {
@@ -382,7 +410,6 @@ static int bpmp_populate_debugfs_inband(struct tegra_bpmp *bpmp,
 	char *buf, *pathbuf;
 	const char *name;
 	int err = 0;
-	int retry_count = 50;
 
 	if (!bpmp || !parent || !ppath)
 		return -EINVAL;
@@ -397,15 +424,9 @@ static int bpmp_populate_debugfs_inband(struct tegra_bpmp *bpmp,
 		return -ENOMEM;
 	}
 
-retry:
 	err = mrq_debug_read(bpmp, ppath, buf, bufsize, &dsize);
-	if (err) {
-		if (err == -BPMP_EBUSY && retry_count-- > 0) {
-			msleep(20);
-			goto retry;
-		} else
-			goto out;
-	}
+	if (err)
+		goto out;
 
 	seqbuf_init(&seqbuf, buf, dsize);
 
@@ -444,7 +465,7 @@ retry:
 			mode |= attrs & DEBUGFS_S_IWUSR ? 0200 : 0;
 			dentry = debugfs_create_file(name, mode, parent, bpmp,
 						     &bpmp_debug_fops);
-			if (!dentry) {
+			if (IS_ERR(dentry)) {
 				err = -ENOMEM;
 				goto out;
 			}
@@ -695,7 +716,7 @@ static int bpmp_populate_dir(struct tegra_bpmp *bpmp, struct seqbuf *seqbuf,
 
 		if (t & DEBUGFS_S_ISDIR) {
 			dentry = debugfs_create_dir(name, parent);
-			if (!dentry)
+			if (IS_ERR(dentry))
 				return -ENOMEM;
 			err = bpmp_populate_dir(bpmp, seqbuf, dentry, depth+1);
 			if (err < 0)
@@ -708,7 +729,7 @@ static int bpmp_populate_dir(struct tegra_bpmp *bpmp, struct seqbuf *seqbuf,
 			dentry = debugfs_create_file(name, mode,
 						     parent, bpmp,
 						     &debugfs_fops);
-			if (!dentry)
+			if (IS_ERR(dentry))
 				return -ENOMEM;
 		}
 	}
@@ -758,11 +779,11 @@ int tegra_bpmp_init_debugfs(struct tegra_bpmp *bpmp)
 		return 0;
 
 	root = debugfs_create_dir("bpmp", NULL);
-	if (!root)
+	if (IS_ERR(root))
 		return -ENOMEM;
 
 	bpmp->debugfs_mirror = debugfs_create_dir("debug", root);
-	if (!bpmp->debugfs_mirror) {
+	if (IS_ERR(bpmp->debugfs_mirror)) {
 		err = -ENOMEM;
 		goto out;
 	}
