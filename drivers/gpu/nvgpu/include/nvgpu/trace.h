@@ -28,7 +28,7 @@ struct gk20a;
 #ifdef __KERNEL__
 
 #ifdef CONFIG_NVGPU_TRACE
-#include <trace/events/gk20a.h>
+#include <nvgpu/posix/trace_gk20a.h>
 #endif
 void nvgpu_trace_intr_stall_start(struct gk20a *g);
 void nvgpu_trace_intr_stall_done(struct gk20a *g);

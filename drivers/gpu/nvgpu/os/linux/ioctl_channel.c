@@ -66,54 +66,6 @@
 		(sizeof(struct gk20a_cs_snapshot_fifo) +	\
 		sizeof(struct gk20a_cs_snapshot_fifo_entry) * 256)
 
-#ifdef CONFIG_NVGPU_TRACE
-static const char *gr_gk20a_graphics_preempt_mode_name(u32 graphics_preempt_mode)
-{
-	switch (graphics_preempt_mode) {
-	case NVGPU_PREEMPTION_MODE_GRAPHICS_WFI:
-		return "WFI";
-	default:
-		return "?";
-	}
-}
-
-static const char *gr_gk20a_compute_preempt_mode_name(u32 compute_preempt_mode)
-{
-	switch (compute_preempt_mode) {
-	case NVGPU_PREEMPTION_MODE_COMPUTE_WFI:
-		return "WFI";
-	case NVGPU_PREEMPTION_MODE_COMPUTE_CTA:
-		return "CTA";
-	default:
-		return "?";
-	}
-}
-#endif
-
-#ifdef CONFIG_NVGPU_TRACE
-static void gk20a_channel_trace_sched_param(
-	void (*trace)(int chid, int tsgid, pid_t pid, u32 timeslice,
-		u32 timeout, const char *interleave,
-		const char *graphics_preempt_mode,
-		const char *compute_preempt_mode),
-	struct nvgpu_channel *ch)
-{
-	struct nvgpu_tsg *tsg = nvgpu_tsg_from_ch(ch);
-
-	if (!tsg)
-		return;
-
-	(trace)(ch->chid, ch->tsgid, ch->pid,
-		nvgpu_tsg_from_ch(ch)->timeslice_us,
-		ch->ctxsw_timeout_max_ms,
-		nvgpu_runlist_interleave_level_name(tsg->interleave_level),
-		gr_gk20a_graphics_preempt_mode_name(
-			nvgpu_gr_ctx_get_graphics_preemption_mode(tsg->gr_ctx)),
-		gr_gk20a_compute_preempt_mode_name(
-			nvgpu_gr_ctx_get_compute_preemption_mode(tsg->gr_ctx)));
-}
-#endif
-
 /*
  * Although channels do have pointers back to the gk20a struct that they were
  * created under in cases where the driver is killed that pointer can be bad.
@@ -460,10 +412,6 @@ int gk20a_channel_release(struct inode *inode, struct file *filp)
 		goto channel_release;
 	}
 
-#ifdef CONFIG_NVGPU_TRACE
-	trace_gk20a_channel_release(dev_name(dev_from_gk20a(g)));
-#endif
-
 	nvgpu_channel_close(ch);
 	gk20a_channel_free_error_notifiers(ch);
 
@@ -507,10 +455,6 @@ static int __gk20a_channel_open(struct gk20a *g, struct nvgpu_cdev *cdev,
 		}
 	}
 
-#ifdef CONFIG_NVGPU_TRACE
-	trace_gk20a_channel_open(dev_name(dev_from_gk20a(g)));
-#endif
-
 	priv = nvgpu_kzalloc(g, sizeof(*priv));
 	if (!priv) {
 		err = -ENOMEM;
@@ -532,11 +476,6 @@ static int __gk20a_channel_open(struct gk20a *g, struct nvgpu_cdev *cdev,
 		err = -ENOMEM;
 		goto fail_busy;
 	}
-
-#ifdef CONFIG_NVGPU_TRACE
-	gk20a_channel_trace_sched_param(
-		trace_gk20a_channel_sched_defaults, ch);
-#endif
 
 	priv->g = g;
 	priv->c = ch;
@@ -1435,10 +1374,6 @@ long gk20a_channel_ioctl(struct file *filp,
 		nvgpu_log(g, gpu_dbg_gpu_dbg, "setting timeout (%d ms) for chid %d",
 			   timeout, ch->chid);
 		ch->ctxsw_timeout_max_ms = timeout;
-#ifdef CONFIG_NVGPU_TRACE
-		gk20a_channel_trace_sched_param(
-			trace_gk20a_channel_set_timeout, ch);
-#endif
 		break;
 	}
 	case NVGPU_IOCTL_CHANNEL_SET_TIMEOUT_EX:
@@ -1452,10 +1387,6 @@ long gk20a_channel_ioctl(struct file *filp,
 			   timeout, ch->chid);
 		ch->ctxsw_timeout_max_ms = timeout;
 		ch->ctxsw_timeout_debug_dump = ctxsw_timeout_debug_dump;
-#ifdef CONFIG_NVGPU_TRACE
-		gk20a_channel_trace_sched_param(
-			trace_gk20a_channel_set_timeout, ch);
-#endif
 		break;
 	}
 	case NVGPU_IOCTL_CHANNEL_GET_TIMEDOUT:
