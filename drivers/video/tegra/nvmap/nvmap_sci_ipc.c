@@ -314,18 +314,6 @@ int nvmap_get_handle_from_sci_ipc_id(struct nvmap_client *client, u32 flags,
 unlock:
 	mutex_unlock(&nvmapsciipc->mlock);
 
-	if (!ret) {
-		if (!client->ida)
-			trace_refcount_create_handle_from_sci_ipc_id(h, dmabuf,
-				atomic_read(&h->ref),
-				atomic_long_read(&dmabuf->file->f_count),
-				is_ro ? "RO" : "RW");
-		else
-			trace_refcount_get_handle_from_sci_ipc_id(h, dmabuf,
-				atomic_read(&h->ref),
-				is_ro ? "RO" : "RW");
-	}
-
 	return ret;
 }
 

@@ -3,7 +3,7 @@
  *
  * Tegra Graphics Host Syncpoints
  *
- * Copyright (c) 2010-2022, NVIDIA CORPORATION. All rights reserved.
+ * Copyright (c) 2010-2020, NVIDIA CORPORATION. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
@@ -60,7 +60,7 @@ struct nvhost_syncpt {
 	const char **syncpt_names;
 	const char **last_used_by;
 	struct nvhost_syncpt_attr *syncpt_attrs;
-#ifdef CONFIG_TEGRA_GRHOST_SYNC
+#if IS_ENABLED(CONFIG_TEGRA_GRHOST_SYNC) && IS_ENABLED(CONFIG_SYNC)
 	struct nvhost_sync_timeline **timeline;
 	struct nvhost_sync_timeline *timeline_invalid;
 	struct nvhost_syncpt_attr invalid_min_attr;
@@ -68,6 +68,9 @@ struct nvhost_syncpt {
 	struct nvhost_syncpt_attr invalid_name_attr;
 	struct nvhost_syncpt_attr invalid_syncpt_type_attr;
 	struct nvhost_syncpt_attr invalid_assigned_attr;
+#endif
+#if IS_ENABLED(CONFIG_TEGRA_GRHOST_SYNC) && IS_ENABLED(CONFIG_SYNC_FILE)
+	u64 syncpt_context_base;
 #endif
 };
 
@@ -117,6 +120,7 @@ int nvhost_syncpt_client_managed(struct nvhost_syncpt *sp, u32 id);
 int nvhost_syncpt_nb_hw_pts(struct nvhost_syncpt *sp);
 int nvhost_syncpt_nb_pts(struct nvhost_syncpt *sp);
 int nvhost_syncpt_pts_base(struct nvhost_syncpt *sp);
+int nvhost_syncpt_nb_irqs(struct nvhost_syncpt *sp);
 bool nvhost_syncpt_is_valid_hw_pt(struct nvhost_syncpt *sp, u32 id);
 bool nvhost_syncpt_is_valid_hw_pt_nospec(struct nvhost_syncpt *sp, u32 *id);
 bool nvhost_syncpt_is_valid_pt(struct nvhost_syncpt *sp, u32 id);
@@ -151,7 +155,7 @@ void nvhost_syncpt_save(struct nvhost_syncpt *sp);
 
 const char *nvhost_syncpt_get_last_client(struct platform_device *pdev, int id);
 
-void nvhost_syncpt_reset(struct nvhost_syncpt *sp, bool from_reg);
+void nvhost_syncpt_reset(struct nvhost_syncpt *sp);
 void nvhost_syncpt_initialize_unused(struct nvhost_syncpt *sp);
 void nvhost_syncpt_reset_client(struct platform_device *pdev);
 

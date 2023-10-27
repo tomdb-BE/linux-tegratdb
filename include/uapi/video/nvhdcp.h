@@ -3,7 +3,7 @@
  *
  * nvhdcp.h: tegra dc hdcp declarations.
  *
- * Copyright (c) 2016-2023, NVIDIA CORPORATION, All rights reserved.
+ * Copyright (c) 2010-2020, NVIDIA CORPORATION, All rights reserved.
  *
  * This software is licensed under the terms of the GNU General Public
  * License version 2, as published by the Free Software Foundation, and
@@ -82,13 +82,11 @@ struct tegra_nvhdcp_packet {
 	__u32 port; /* (OUT) DP or HDMI */
 
 	__u32 binfo; /* (OUT) link/repeater status for DP */
-
-	__u32 sor; /* (OUT) SOR or SOR1 */
 };
 
 /* parameters to TEGRAIO_NVHDCP_SET_POLICY */
-#define TEGRA_NVHDCP_POLICY_ALWAYS_ON	0
-#define TEGRA_NVHDCP_POLICY_ON_DEMAND	1
+#define TEGRA_NVHDCP_POLICY_ON_DEMAND	0
+#define TEGRA_NVHDCP_POLICY_ALWAYS_ON	1
 #define TEGRA_NVHDCP_POLICY_ALWAYS_OFF	2
 
 /* ioctls */

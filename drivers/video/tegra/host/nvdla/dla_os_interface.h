@@ -1,7 +1,7 @@
 /*
  * NVDLA OS Interface
  *
- * Copyright (c) 2016-2021, NVIDIA Corporation.  All rights reserved.
+ * Copyright (c) 2016-2022, NVIDIA Corporation.  All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
@@ -34,7 +34,7 @@
  * @brief DLA engine ID used to verify version engine
  * @{
  */
-#define DLA_ENGINE_ID		0x44
+#define DLA_ENGINE_ID		0x44U
 /** @} */
 
 /**
@@ -44,7 +44,7 @@
  *        command IDs mentioned in @ref Command IDs
  * @{
  */
-#define DLA_METHOD_ID_CMD_MASK		0xff
+#define DLA_METHOD_ID_CMD_MASK		0xffU
 /** @} */
 
 /**
@@ -128,9 +128,9 @@ enum dla_action {
 	ACTION_WRITE_TASK_STATUS	= 0xC1U,
 };
 
-#define PING_DATA_SIZE		4
-#define BUFFER_MULTIPLIER	4
-#define MAX_NUM_GRIDS		6
+#define PING_DATA_SIZE		4U
+#define BUFFER_MULTIPLIER	4U
+#define MAX_NUM_GRIDS		6U
 
 #define ERR(code) (-(int32_t)DLA_ERR_##code)
 
@@ -141,39 +141,47 @@ enum dla_commands {
 	/**
 	 * Used for testing communication between CCPLEX and DLA
 	 */
-	DLA_CMD_PING			= 1U,
-	DLA_CMD_GET_STATUS_UNUSED	= 2U,
-	DLA_CMD_RESET_UNUSED		= 3U,
-	DLA_CMD_DLA_CONTROL_UNUSED	= 4U,
+	DLA_CMD_PING					= 1U,
+	DLA_CMD_GET_STATUS_UNUSED		= 2U,
+	DLA_CMD_RESET_UNUSED			= 3U,
+	DLA_CMD_DLA_CONTROL_UNUSED		= 4U,
 	DLA_CMD_GET_QUEUE_STATUS_UNUSED	= 5U,
-	DLA_CMD_GET_STATISTICS_UNUSED	= 6U,
+	DLA_CMD_GET_STATISTICS			= 6U,
 	/**
 	 * Submit task to DLA
 	 */
-	DLA_CMD_SUBMIT_TASK		= 7U,
+	DLA_CMD_SUBMIT_TASK				= 7U,
 	DLA_CMD_SET_SCHEDULER_UNUSED	= 8U,
-	DLA_CMD_READ_INFO_UNUSED	= 9U,
+	DLA_CMD_READ_INFO_UNUSED		= 9U,
 	/**
 	 * Set various debugging parameters (trace/printf/crashdump)
 	 * Only enabled in Debug build.
 	 */
-	DLA_CMD_SET_DEBUG		= 10U,
+	DLA_CMD_SET_DEBUG				= 10U,
 	/**
 	 * Set the address & size of various regions used for various reasons
 	 */
-	DLA_CMD_SET_REGIONS		= 11U,
+	DLA_CMD_SET_REGIONS				= 11U,
 	/**
 	 * Suspend processing a queue
 	 */
-	DLA_CMD_QUEUE_SUSPEND		= 12U,
+	DLA_CMD_QUEUE_SUSPEND			= 12U,
 	/**
 	 * Resume processing a queue
 	 */
-	DLA_CMD_QUEUE_RESUME		= 13U,
+	DLA_CMD_QUEUE_RESUME			= 13U,
 	/**
 	 * Flushes a queue
 	 */
-	DLA_CMD_QUEUE_FLUSH		= 14U,
+	DLA_CMD_QUEUE_FLUSH				= 14U,
+	/**
+	 * Sets stat window size
+	 */
+	DLA_CMD_SET_STAT_WINDOW_SIZE	= 15U,
+	/**
+	 * Gets stat window size
+	 */
+	DLA_CMD_GET_STAT_WINDOW_SIZE	= 16U,
 };
 
 /**
@@ -217,7 +225,7 @@ enum dla_msgs {
  * Magic number expected to be written to mailbox0 after
  * interuppt handling is complete
  */
-#define DLA_MSG_INTERRUPT_HANDLING_COMPLETE 0xD1A0CAFE
+#define DLA_MSG_INTERRUPT_HANDLING_COMPLETE 0xD1A0CAFEU
 
 /**
  * Struct dla_task_descriptor

@@ -10,9 +10,6 @@ ifeq ($(origin srctree.nvgpu), undefined)
 srctree.nvgpu := $(abspath $(shell dirname $(lastword $(MAKEFILE_LIST)))/../../..)
 endif
 
-srctree.nvgpu := $(srctree)
-srctree.nvidia := $(srctree)
-
 ccflags-y += -I$(srctree.nvgpu)/drivers/gpu/nvgpu/include
 ccflags-y += -I$(srctree.nvgpu)/drivers/gpu/nvgpu
 ccflags-y += -I$(srctree.nvgpu)/include
@@ -41,18 +38,16 @@ endif
 # When using the upstream host1x driver, the Makefile must define the
 # srctree.host1x path in order to find the necessary header files for
 # the upstream host1x driver.
-ifeq ($(CONFIG_TEGRA_GK20A_NVHOST_HOST1X),y)
-ccflags-y += -I$(srctree.nvidia)/drivers/gpu/host1x/include
-endif
+ccflags-y += -I$(srctree)/drivers/gpu/host1x/include
 
 # When using the upstream nvmap driver, the Makefile must define the
 # srctree.nvmap path in order to find the necessary header files for
 # the upstream nvmap driver.
 ifeq ($(CONFIG_NVGPU_NVMAP_NEXT),y)
 ifeq ($(origin srctree.nvmap), undefined)
-srctree.nvmap := $(srctree.nvidia)/drivers/video/tegra/nvmap
+srctree.nvmap := $(srctree)/drivers/video/tegra/nvmap
 endif
-ccflags-y += -I$(srctree.nvmap)/include
+ccflags-y += -I$(srctree)/include
 endif
 
 ifeq ($(CONFIG_NVGPU_DEBUGGER),y)
@@ -574,7 +569,7 @@ nvgpu-$(CONFIG_TEGRA_GK20A_NVHOST) += \
 	os/linux/nvhost_host1x.o
 else
 nvgpu-$(CONFIG_TEGRA_GK20A_NVHOST) += \
-	os/linux/nvhost.o
+	os/linux/nvhost_host1x.o
 endif
 
 nvgpu-$(CONFIG_TEGRA_GK20A_NVHOST) += \

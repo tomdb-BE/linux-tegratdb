@@ -297,6 +297,8 @@ static int __nvgpu_free_kmem_alloc(struct nvgpu_mem_alloc_tracker *tracker,
 	alloc = nvgpu_rem_alloc(tracker, addr);
 	if (!alloc) {
 		nvgpu_unlock_tracker(tracker);
+		nvgpu_do_assert_print(g,
+			"Possible double-free detected: 0x%llx!", addr);
 		return -EINVAL;
 	}
 

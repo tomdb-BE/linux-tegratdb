@@ -455,6 +455,10 @@ int gk20a_pm_finalize_poweron(struct device *dev)
 
 	nvgpu_set_power_state(g, NVGPU_STATE_POWERING_ON);
 
+#ifdef CONFIG_NVGPU_TRACE
+	trace_gk20a_finalize_poweron(dev_name(dev));
+#endif
+
 	/* Increment platform power refcount */
 	if (platform->busy) {
 		err = platform->busy(dev);
@@ -556,6 +560,10 @@ int gk20a_pm_finalize_poweron(struct device *dev)
 		if (platform->initscale)
 			platform->initscale(dev);
 	}
+
+#ifdef CONFIG_NVGPU_TRACE
+	trace_gk20a_finalize_poweron_done(dev_name(dev));
+#endif
 
 	gk20a_scale_resume(dev_from_gk20a(g));
 
@@ -1228,6 +1236,10 @@ static int gk20a_pm_unrailgate(struct device *dev)
 				g->pstats.last_rail_gate_complete);
 
 	g->pstats.railgating_cycle_count++;
+#endif
+
+#ifdef CONFIG_NVGPU_TRACE
+	trace_gk20a_pm_unrailgate(dev_name(dev));
 #endif
 
 	nvgpu_mutex_acquire(&platform->railgate_lock);

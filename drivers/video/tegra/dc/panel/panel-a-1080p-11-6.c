@@ -1,7 +1,7 @@
 /*
  * panel-a-1080p-11-6.c: Panel driver for 1080p-11-6 panel.
  *
- * Copyright (c) 2012-2022, NVIDIA Corporation. All rights reserved.
+ * Copyright (c) 2012-2020, NVIDIA Corporation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
@@ -27,7 +27,6 @@
 #include <linux/export.h>
 
 #include "../dc.h"
-#include "board.h"
 #include "board-panel.h"
 #include "gpio-names.h"
 #include "tegra11_host1x_devices.h"
@@ -451,3 +450,5 @@ struct tegra_panel __initdata dsi_a_1080p_11_6 = {
 	.register_i2c_bridge = dsi_a_1080p_11_6_i2c_bridge_register,
 	.set_disp_device = dsi_a_1080p_11_6_set_disp_device,
 };
+EXPORT_SYMBOL(dsi_a_1080p_11_6);
+

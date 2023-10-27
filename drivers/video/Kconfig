@@ -5,6 +5,8 @@
 
 menu "Graphics support"
 
+source "drivers/video/tegra/Kconfig"
+
 if HAS_IOMEM
 
 config HAVE_FB_ATMEL

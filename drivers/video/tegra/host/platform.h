@@ -23,7 +23,7 @@
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(5,5,0)
 
-#include <soc/tegra/fuse.h>
+#include <soc/tegra/chip-id.h>
 
 #else
 

@@ -22,6 +22,7 @@
 #include <linux/slab.h>
 #include <linux/sync_file.h>
 
+#include <uapi/linux/nvhost_ioctl.h>
 #include <nvgpu/os_fence.h>
 #include <nvgpu/os_fence_syncpts.h>
 #include <nvgpu/nvhost.h>

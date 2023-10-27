@@ -34,7 +34,7 @@
 #include "class_ids.h"
 #include "debug.h"
 #if KERNEL_VERSION(4, 15, 0) > LINUX_VERSION_CODE
-#include <soc/tegra/fuse.h>
+#include <soc/tegra/chip-id.h>
 #endif
 #include <soc/tegra/fuse.h>
 

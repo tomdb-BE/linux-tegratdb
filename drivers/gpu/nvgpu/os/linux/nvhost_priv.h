@@ -17,9 +17,57 @@
 #ifndef __NVGPU_NVHOST_PRIV_H__
 #define __NVGPU_NVHOST_PRIV_H__
 
+struct nvhost_fence {
+        u32 syncpt_id; /* syncpoint id or sync fence fd */
+        u32 value;     /* syncpoint value (discarded when using sync fence) */
+};
+
+
+struct host1x;
+
+struct host1x_syncpt_intr {
+        spinlock_t lock;
+        struct list_head wait_head;
+        char thresh_irq_name[12];
+        struct work_struct work;
+};
+
+
+/* Reserved for replacing an expired wait with a NOP */
+#define HOST1X_SYNCPT_RESERVED                  0
+
+struct host1x_syncpt_base {
+        unsigned int id;
+        bool requested;
+};
+
+struct host1x_syncpt {
+        struct kref ref;
+
+        unsigned int id;
+        atomic_t min_val;
+        atomic_t max_val;
+        u32 base_val;
+        const char *name;
+        bool client_managed;
+        struct host1x *host;
+        struct host1x_syncpt_base *base;
+
+        /* interrupt data */
+        struct host1x_syncpt_intr intr;
+
+        /*
+         * If a submission incrementing this syncpoint fails, lock it so that
+         * further submission cannot be made until application has handled the
+         * failure.
+         */
+        bool locked;
+};
+
+
+
 #include <nvgpu/os_fence_syncpts.h>
 
-struct nvhost_fence;
 struct nvgpu_nvhost_dev {
 	struct platform_device *host1x_pdev;
 };

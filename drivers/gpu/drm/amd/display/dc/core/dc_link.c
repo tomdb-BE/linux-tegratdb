@@ -1665,12 +1665,6 @@ struct dc_link *link_create(const struct link_init_data *init_params)
 	if (false == dc_link_construct(link, init_params))
 		goto construct_fail;
 
-	/*
-	 * Must use preferred_link_setting, not reported_link_cap or verified_link_cap,
-	 * since struct preferred_link_setting won't be reset after S3.
-	 */
-	link->preferred_link_setting.dpcd_source_device_specific_field_support = true;
-
 	return link;
 
 construct_fail:
@@ -1695,6 +1689,8 @@ static void enable_stream_features(struct pipe_ctx *pipe_ctx)
 		struct dc_link *link = stream->link;
 		union down_spread_ctrl old_downspread;
 		union down_spread_ctrl new_downspread;
+
+		memset(&old_downspread, 0, sizeof(old_downspread));
 
 		core_link_read_dpcd(link, DP_DOWNSPREAD_CTRL,
 				&old_downspread.raw, sizeof(old_downspread));

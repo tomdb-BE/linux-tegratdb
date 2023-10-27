@@ -69,7 +69,7 @@ struct nvmap_create_handle {
 			 */
 			union {
 				__u64 ivm_id;	 /* CreateHandle from ivm*/
-				__s32 ivm_handle;/* Get ivm_id from handle */
+				__u32 ivm_handle;/* Get ivm_id from handle */
 			};
 		};
 		struct {
@@ -115,43 +115,8 @@ struct nvmap_alloc_ivm_handle {
 				 */
 };
 
-struct nvmap_alloc_kind_handle {
-	__u32 handle;		/* nvmap handle */
-	__u32 heap_mask;
-	__u32 flags;
-	__u32 align;
-	__u8  kind;
-	__u8  comp_tags;
-};
-
-struct nvmap_map_caller {
-	__u32 handle;		/* nvmap handle */
-	__u32 offset;		/* offset into hmem; should be page-aligned */
-	__u32 length;		/* number of bytes to map */
-	__u32 flags;		/* maps as wb/iwb etc. */
-	unsigned long addr;	/* user pointer */
-};
-
-struct nvmap_map_caller_32 {
-	__u32 handle;		/* nvmap handle */
-	__u32 offset;		/* offset into hmem; should be page-aligned */
-	__u32 length;		/* number of bytes to map */
-	__u32 flags;		/* maps as wb/iwb etc. */
-	__u32 addr;		/* user pointer*/
-};
-
 struct nvmap_rw_handle {
-	unsigned long addr;	/* user pointer*/
-	__u32 handle;		/* nvmap handle */
-	__u32 offset;		/* offset into hmem */
-	__u32 elem_size;	/* individual atom size */
-	__u32 hmem_stride;	/* delta in bytes between atoms in hmem */
-	__u32 user_stride;	/* delta in bytes between atoms in user */
-	__u32 count;		/* number of atoms to copy */
-};
-
-struct nvmap_rw_handle_64 {
-	unsigned long addr;	/* user pointer*/
+	__u64 addr;		/* user pointer*/
 	__u32 handle;		/* nvmap handle */
 	__u64 offset;		/* offset into hmem */
 	__u64 elem_size;	/* individual atom size */
@@ -160,6 +125,8 @@ struct nvmap_rw_handle_64 {
 	__u64 count;		/* number of atoms to copy */
 };
 
+#ifdef __KERNEL__
+#ifdef CONFIG_COMPAT
 struct nvmap_rw_handle_32 {
 	__u32 addr;		/* user pointer */
 	__u32 handle;		/* nvmap handle */
@@ -169,18 +136,8 @@ struct nvmap_rw_handle_32 {
 	__u32 user_stride;	/* delta in bytes between atoms in user */
 	__u32 count;		/* number of atoms to copy */
 };
-
-struct nvmap_pin_handle {
-	__u32 *handles;		/* array of handles to pin/unpin */
-	unsigned long *addr;	/* array of addresses to return */
-	__u32 count;		/* number of entries in handles */
-};
-
-struct nvmap_pin_handle_32 {
-	__u32 handles;		/* array of handles to pin/unpin */
-	__u32 addr;		/*  array of addresses to return */
-	__u32 count;		/* number of entries in handles */
-};
+#endif /* CONFIG_COMPAT */
+#endif /* __KERNEL__ */
 
 struct nvmap_handle_param {
 	__u32 handle;		/* nvmap handle */
@@ -188,11 +145,15 @@ struct nvmap_handle_param {
 	unsigned long result;	/* returns requested info*/
 };
 
+#ifdef __KERNEL__
+#ifdef CONFIG_COMPAT
 struct nvmap_handle_param_32 {
 	__u32 handle;		/* nvmap handle */
 	__u32 param;		/* size/align/base/heap etc. */
 	__u32 result;		/* returns requested info*/
 };
+#endif /* CONFIG_COMPAT */
+#endif /* __KERNEL__ */
 
 struct nvmap_cache_op {
 	unsigned long addr;	/* user pointer*/
@@ -208,12 +169,16 @@ struct nvmap_cache_op_64 {
 	__s32 op;		/* wb/wb_inv/inv */
 };
 
+#ifdef __KERNEL__
+#ifdef CONFIG_COMPAT
 struct nvmap_cache_op_32 {
 	__u32 addr;		/* user pointer*/
 	__u32 handle;		/* nvmap handle */
 	__u32 len;		/* bytes to flush */
 	__s32 op;		/* wb/wb_inv/inv */
 };
+#endif /* CONFIG_COMPAT */
+#endif /* __KERNEL__ */
 
 struct nvmap_cache_op_list {
 	__u64 handles;		/* Ptr to u32 type array, holding handles */
@@ -244,17 +209,6 @@ struct nvmap_set_tag_label {
 	__u64 addr;		/* in: pointer to label or NULL to remove */
 };
 
-struct nvmap_available_ivm_heaps {
-	/* One is input parameter, and other is output parameter. Since it is a
-	 * union please note that input parameter will be overwritten once the
-	 * ioctl returns.
-	 */
-	union {
-		__u32 requested_heap_type;	/* Input */
-		__u32 heap_mask;		/* Output */
-	};
-};
-
 struct nvmap_available_heaps {
 	__u64 heaps;		/* heaps bitmask */
 };
@@ -262,6 +216,26 @@ struct nvmap_available_heaps {
 struct nvmap_heap_size {
 	__u32 heap;
 	__u64 size;
+};
+
+struct nvmap_sciipc_map {
+	__u64 auth_token;    /* AuthToken */
+	__u32 flags;       /* Exporter permission flags */
+	__u32 sci_ipc_id;  /* FromImportId */
+	__u32 handle;      /* Nvmap handle */
+};
+
+struct nvmap_handle_parameters {
+    __u8 contig;
+    __u32 import_id;
+    __u32 handle;
+    __u32 heap_number;
+    __u32 access_flags;
+    __u64 heap;
+    __u64 align;
+    __u64 coherency;
+    __u64 size;
+    __u64 offset;
 };
 
 /**
@@ -276,16 +250,13 @@ struct nvmap_query_heap_params {
 	__u64 largest_free_block;
 };
 
-struct nvmap_handle_parameters {
-    __u8 contig;
-    __u32 import_id;
-    __u32 handle;
-    __u32 heap_number;
-    __u32 access_flags;
-    __u64 heap;
-    __u64 align;
-    __u64 coherency;
-    __u64 size;
+/**
+ * Struct used while duplicating memory handle
+ */
+struct nvmap_duplicate_handle {
+	__u32 handle;
+	__u32 access_flags;
+	__u32 dup_handle;
 };
 
 #define NVMAP_IOC_MAGIC 'N'
@@ -305,44 +276,35 @@ struct nvmap_handle_parameters {
  */
 #define NVMAP_IOC_FREE       _IO(NVMAP_IOC_MAGIC, 4)
 
-/* Maps the region of the specified handle into a user-provided virtual address
- * that was previously created via an mmap syscall on this fd */
-#define NVMAP_IOC_MMAP       _IOWR(NVMAP_IOC_MAGIC, 5, struct nvmap_map_caller)
-#define NVMAP_IOC_MMAP_32    _IOWR(NVMAP_IOC_MAGIC, 5, struct nvmap_map_caller_32)
-
 /* Reads/writes data (possibly strided) from a user-provided buffer into the
  * hmem at the specified offset */
 #define NVMAP_IOC_WRITE      _IOW(NVMAP_IOC_MAGIC, 6, struct nvmap_rw_handle)
 #define NVMAP_IOC_READ       _IOW(NVMAP_IOC_MAGIC, 7, struct nvmap_rw_handle)
+#ifdef __KERNEL__
+#ifdef CONFIG_COMPAT
 #define NVMAP_IOC_WRITE_32   _IOW(NVMAP_IOC_MAGIC, 6, struct nvmap_rw_handle_32)
 #define NVMAP_IOC_READ_32    _IOW(NVMAP_IOC_MAGIC, 7, struct nvmap_rw_handle_32)
-#define NVMAP_IOC_WRITE_64 \
-	_IOW(NVMAP_IOC_MAGIC, 6, struct nvmap_rw_handle_64)
-#define NVMAP_IOC_READ_64 \
-	_IOW(NVMAP_IOC_MAGIC, 7, struct nvmap_rw_handle_64)
+#endif /* CONFIG_COMPAT */
+#endif /* __KERNEL__ */
 
 #define NVMAP_IOC_PARAM _IOWR(NVMAP_IOC_MAGIC, 8, struct nvmap_handle_param)
+#ifdef __KERNEL__
+#ifdef CONFIG_COMPAT
 #define NVMAP_IOC_PARAM_32 _IOWR(NVMAP_IOC_MAGIC, 8, struct nvmap_handle_param_32)
-
-/* Pins a list of memory handles into IO-addressable memory (either IOVMM
- * space or physical memory, depending on the allocation), and returns the
- * address. Handles may be pinned recursively. */
-#define NVMAP_IOC_PIN_MULT      _IOWR(NVMAP_IOC_MAGIC, 10, struct nvmap_pin_handle)
-#define NVMAP_IOC_UNPIN_MULT    _IOW(NVMAP_IOC_MAGIC, 11, struct nvmap_pin_handle)
-#define NVMAP_IOC_PIN_MULT_32   _IOWR(NVMAP_IOC_MAGIC, 10, struct nvmap_pin_handle_32)
-#define NVMAP_IOC_UNPIN_MULT_32 _IOW(NVMAP_IOC_MAGIC, 11, struct nvmap_pin_handle_32)
+#endif /* CONFIG_COMPAT */
+#endif /* __KERNEL__ */
 
 #define NVMAP_IOC_CACHE      _IOW(NVMAP_IOC_MAGIC, 12, struct nvmap_cache_op)
 #define NVMAP_IOC_CACHE_64   _IOW(NVMAP_IOC_MAGIC, 12, struct nvmap_cache_op_64)
+#ifdef __KERNEL__
+#ifdef CONFIG_COMPAT
 #define NVMAP_IOC_CACHE_32  _IOW(NVMAP_IOC_MAGIC, 12, struct nvmap_cache_op_32)
+#endif /* CONFIG_COMPAT */
+#endif /* __KERNEL__ */
 
 /* Returns a global ID usable to allow a remote process to create a handle
  * reference to the same handle */
 #define NVMAP_IOC_GET_ID  _IOWR(NVMAP_IOC_MAGIC, 13, struct nvmap_create_handle)
-
-/* Returns a dma-buf fd usable to allow a remote process to create a handle
- * reference to the same handle */
-#define NVMAP_IOC_SHARE  _IOWR(NVMAP_IOC_MAGIC, 14, struct nvmap_create_handle)
 
 /* Returns a file id that allows a remote process to create a handle
  * reference to the same handle */
@@ -354,14 +316,10 @@ struct nvmap_handle_parameters {
 /* Perform cache maintenance on a list of handles. */
 #define NVMAP_IOC_CACHE_LIST _IOW(NVMAP_IOC_MAGIC, 17,	\
 				  struct nvmap_cache_op_list)
-/* Perform reserve operation on a list of handles. */
-#define NVMAP_IOC_RESERVE _IOW(NVMAP_IOC_MAGIC, 18,	\
-				  struct nvmap_cache_op_list)
 
 #define NVMAP_IOC_FROM_IVC_ID _IOWR(NVMAP_IOC_MAGIC, 19, struct nvmap_create_handle)
 #define NVMAP_IOC_GET_IVC_ID _IOWR(NVMAP_IOC_MAGIC, 20, struct nvmap_create_handle)
-#define NVMAP_IOC_GET_IVM_HEAPS \
-	_IOWR(NVMAP_IOC_MAGIC, 21, struct nvmap_available_ivm_heaps)
+#define NVMAP_IOC_GET_IVM_HEAPS _IOR(NVMAP_IOC_MAGIC, 21, unsigned int)
 
 /* Create a new memory handle from VA passed */
 #define NVMAP_IOC_FROM_VA _IOWR(NVMAP_IOC_MAGIC, 22, struct nvmap_create_handle_from_va)
@@ -379,20 +337,30 @@ struct nvmap_handle_parameters {
 
 #define NVMAP_IOC_PARAMETERS \
 	_IOR(NVMAP_IOC_MAGIC, 27, struct nvmap_handle_parameters)
-/* START of T124 IOCTLS */
-/* Actually allocates memory for the specified handle, with kind */
-#define NVMAP_IOC_ALLOC_KIND _IOW(NVMAP_IOC_MAGIC, 100, struct nvmap_alloc_kind_handle)
 
+/* START of T124 IOCTLS */
 /* Actually allocates memory from IVM heaps */
 #define NVMAP_IOC_ALLOC_IVM _IOW(NVMAP_IOC_MAGIC, 101, struct nvmap_alloc_ivm_handle)
 
 /* Allocate seperate memory for VPR */
 #define NVMAP_IOC_VPR_FLOOR_SIZE _IOW(NVMAP_IOC_MAGIC, 102, __u32)
 
+/* Get SCI_IPC_ID tied up with nvmap_handle */
+#define NVMAP_IOC_GET_SCIIPCID _IOR(NVMAP_IOC_MAGIC, 103, \
+		struct nvmap_sciipc_map)
+
+/* Get Nvmap handle from SCI_IPC_ID */
+#define NVMAP_IOC_HANDLE_FROM_SCIIPCID _IOR(NVMAP_IOC_MAGIC, 104, \
+		struct nvmap_sciipc_map)
+
 /* Get heap parameters such as total and frre size */
 #define NVMAP_IOC_QUERY_HEAP_PARAMS _IOR(NVMAP_IOC_MAGIC, 105, \
 		struct nvmap_query_heap_params)
 
-#define NVMAP_IOC_MAXNR (_IOC_NR(NVMAP_IOC_QUERY_HEAP_PARAMS))
+/* Duplicate NvRmMemHandle with same/reduced permission */
+#define NVMAP_IOC_DUP_HANDLE _IOWR(NVMAP_IOC_MAGIC, 106, \
+		struct nvmap_duplicate_handle)
+
+#define NVMAP_IOC_MAXNR (_IOC_NR(NVMAP_IOC_DUP_HANDLE))
 
 #endif /* __UAPI_LINUX_NVMAP_H */

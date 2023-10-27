@@ -29,6 +29,7 @@
 #include "../../../drivers/video/tegra/dc/dc_priv_defs.h"
 #include "../../../drivers/video/tegra/dc/dc_common.h"
 #include <linux/tracepoint.h>
+#include <linux/nvhost.h>
 
 DECLARE_EVENT_CLASS(display_basic_template,
 	TP_PROTO(struct tegra_dc *dc),
