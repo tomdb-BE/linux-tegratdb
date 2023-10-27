@@ -54,9 +54,8 @@ obj-y += keembay/
 GCOV_PROFILE := y
 
 ccflags-y += -I$(srctree)/drivers/video/tegra/host
-ccflags-y += -I$(srctree)/drivers/video/tegra/host
 ccflags-y += -I$(srctree)/include
-ccflags-y += -I$(srctree)/include
+CFLAGS_REMOVE_tegra-cryptodev.o  = -Wimplicit-fallthrough
 obj-$(CONFIG_TEGRA_CRYPTO_DEV) += tegra-cryptodev.o
 obj-$(CONFIG_CRYPTO_DEV_TEGRA_SE) += tegra-se.o
 obj-$(CONFIG_CRYPTO_DEV_TEGRA_SE_USE_HOST1X_INTERFACE) += tegra-se-nvhost.o
