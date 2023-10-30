@@ -19,6 +19,8 @@
 #include <linux/regmap.h>
 #include <media/camera_common.h>
 
+MODULE_LICENSE("GPL v2");
+
 int
 regmap_util_write_table_8(struct regmap *regmap,
 			  const struct reg_8 table[],

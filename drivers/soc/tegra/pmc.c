@@ -108,6 +108,7 @@
 #define PMC_USB_AO			0xf0
 
 #define PMC_SCRATCH41			0x140
+#define PMC_SCRATCH43			0x22c
 
 #define PMC_WAKE2_MASK			0x160
 #define PMC_WAKE2_LEVEL			0x164
@@ -1756,6 +1757,14 @@ int tegra_io_rail_power_off(unsigned int id)
 }
 EXPORT_SYMBOL(tegra_io_rail_power_off);
 
+int tegra_pmc_save_se_context_buffer_address(u32 add)
+{
+        tegra_pmc_writel(pmc, add, PMC_SCRATCH43);
+
+        return 0;
+}
+EXPORT_SYMBOL(tegra_pmc_save_se_context_buffer_address);
+
 #ifdef CONFIG_PM_SLEEP
 enum tegra_suspend_mode tegra_pmc_get_suspend_mode(void)
 {
@@ -2020,7 +2029,7 @@ static int tegra_io_pad_pinconf_get(struct pinctrl_dev *pctl_dev,
 		arg = ret;
 		break;
 
-	case PIN_CONFIG_LOW_POWER_MODE:
+	case PIN_CONFIG_MODE_LOW_POWER:
 		ret = tegra_io_pad_is_powered(pmc, pad->id);
 		if (ret < 0)
 			return ret;
@@ -2057,7 +2066,7 @@ static int tegra_io_pad_pinconf_set(struct pinctrl_dev *pctl_dev,
 		arg = pinconf_to_config_argument(configs[i]);
 
 		switch (param) {
-		case PIN_CONFIG_LOW_POWER_MODE:
+		case PIN_CONFIG_MODE_LOW_POWER:
 			if (arg)
 				err = tegra_io_pad_power_disable(pad->id);
 			else

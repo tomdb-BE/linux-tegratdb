@@ -505,6 +505,10 @@ int nvhost_intr_register_notifier(struct platform_device *pdev,
 				  void (*callback)(void *, int),
 				  void *private_data);
 
+int nvhost_syncpt_fd_get_ext(int fd, struct platform_device *pdev, u32 *id);
+void nvhost_syncpt_cpu_incr_ext(struct platform_device *dev, u32 id);
+void nvhost_syncpt_get_ref_ext(struct platform_device *pdev, u32 id);
+
 /* public host1x sync-point management APIs */
 #ifdef CONFIG_TEGRA_HOST1X
 
@@ -717,9 +721,7 @@ int nvhost_channel_submit(struct nvhost_job *job);
 /* public host1x sync-point management APIs */
 u32 nvhost_get_syncpt_client_managed(struct platform_device *pdev,
 				const char *syncpt_name);
-void nvhost_syncpt_get_ref_ext(struct platform_device *pdev, u32 id);
 const char *nvhost_syncpt_get_name(struct platform_device *dev, int id);
-void nvhost_syncpt_cpu_incr_ext(struct platform_device *dev, u32 id);
 int nvhost_syncpt_read_ext_check(struct platform_device *dev, u32 id, u32 *val);
 int nvhost_syncpt_wait_timeout_ext(struct platform_device *dev, u32 id, u32 thresh,
 	u32 timeout, u32 *value, struct timespec64 *ts);
@@ -730,7 +732,6 @@ int nvhost_syncpt_nb_pts_ext(struct platform_device *dev);
 bool nvhost_syncpt_is_valid_pt_ext(struct platform_device *dev, u32 id);
 u32 nvhost_syncpt_read_minval(struct platform_device *dev, u32 id);
 void nvhost_syncpt_set_maxval(struct platform_device *dev, u32 id, u32 val);
-int nvhost_syncpt_fd_get_ext(int fd, struct platform_device *pdev, u32 *id);
 
 void nvhost_eventlib_log_task(struct platform_device *pdev,
 			      u32 syncpt_id,

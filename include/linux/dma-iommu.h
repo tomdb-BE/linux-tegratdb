@@ -13,7 +13,6 @@
 #include <linux/iommu.h>
 #include <linux/msi.h>
 
-
 /* Domain management interface for IOMMU drivers */
 int iommu_get_dma_cookie(struct iommu_domain *domain);
 int iommu_get_msi_cookie(struct iommu_domain *domain, dma_addr_t base);
@@ -22,6 +21,10 @@ void iommu_put_dma_cookie(struct iommu_domain *domain);
 /* Setup call for arch DMA mapping code */
 void iommu_setup_dma_ops(struct device *dev, u64 dma_base, u64 dma_limit);
 int iommu_dma_init_fq(struct iommu_domain *domain);
+
+void iommu_dma_free_iova(struct device *dev, dma_addr_t iova, size_t size);
+dma_addr_t iommu_dma_alloc_iova(struct device *dev, size_t size,
+                                u64 dma_limit);
 
 /* The DMA API isn't _quite_ the whole story, though... */
 /*
@@ -43,11 +46,6 @@ void iommu_dma_free_cpu_cached_iovas(unsigned int cpu,
 		struct iommu_domain *domain);
 
 extern bool iommu_dma_forcedac;
-
-dma_addr_t iommu_dma_alloc_iova(struct iommu_domain *domain,
-                size_t size, u64 dma_limit, struct device *dev);
-void iommu_dma_free_iova(struct iommu_dma_cookie *cookie,
-                dma_addr_t iova, size_t size, struct iommu_iotlb_gather *gather);
 
 #else /* CONFIG_IOMMU_DMA */
 
@@ -84,6 +82,15 @@ static inline int iommu_dma_prepare_msi(struct msi_desc *desc,
 					phys_addr_t msi_addr)
 {
 	return 0;
+}
+
+static dma_addr_t iommu_dma_alloc_iova(struct device *dev, size_t size,
+                                       u64 dma_limit)
+{
+        return 0;
+}
+void iommu_dma_free_iova(struct device *dev, dma_addr_t iova, size_t size)
+{
 }
 
 static inline void iommu_dma_compose_msi_msg(struct msi_desc *desc,

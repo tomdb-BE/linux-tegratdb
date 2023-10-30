@@ -6,6 +6,8 @@
 #ifndef __SOC_TEGRA_AHB_H__
 #define __SOC_TEGRA_AHB_H__
 
+#define TEGRA_AHB_MASTER_ID_MAX        31
+
 extern int tegra_ahb_enable_smmu(struct device_node *ahb);
 
 int tegra_ahb_get_master_id(struct device *dev);

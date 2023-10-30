@@ -18,8 +18,9 @@ struct pci_epf;
 enum pci_epc_interface_type;
 
 enum pci_notify_event {
-	CORE_INIT,
-	LINK_UP,
+        CORE_INIT,
+        LINK_UP,
+        CORE_DEINIT,
 };
 
 enum pci_barno {

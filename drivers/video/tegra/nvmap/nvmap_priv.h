@@ -158,7 +158,7 @@ extern struct vm_operations_struct nvmap_vma_ops;
 
 #ifdef CONFIG_ARM64
 #define PG_PROT_KERNEL PAGE_KERNEL
-#define FLUSH_DCACHE_AREA __flush_dcache_area
+#define FLUSH_DCACHE_AREA dcache_clean_inval_poc
 #define outer_flush_range(s, e)
 #define outer_inv_range(s, e)
 #define outer_clean_range(s, e)

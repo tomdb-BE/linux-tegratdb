@@ -143,6 +143,22 @@ static void do_fence_timeout(struct work_struct *work)
 	dma_fence_put(&f->base);
 }
 
+int host1x_fence_extract(struct dma_fence *fence, u32 *id, u32 *threshold)
+{
+        struct host1x_syncpt_fence *f;
+
+        if (fence->ops != &host1x_syncpt_fence_ops)
+                return -EINVAL;
+
+        f = container_of(fence, struct host1x_syncpt_fence, base);
+
+        *id = f->sp->id;
+        *threshold = f->threshold;
+
+        return 0;
+}
+EXPORT_SYMBOL(host1x_fence_extract);
+
 struct dma_fence *host1x_fence_create(struct host1x_syncpt *sp, u32 threshold)
 {
 	struct host1x_syncpt_fence *fence;

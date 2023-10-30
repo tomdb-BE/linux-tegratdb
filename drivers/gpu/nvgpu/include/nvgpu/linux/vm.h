@@ -28,7 +28,7 @@
  */
 #ifdef CONFIG_ARM64
 #define outer_flush_range(a, b)
-#define __cpuc_flush_dcache_area __flush_dcache_area
+#define __cpuc_flush_dcache_area dcache_clean_inval_poc
 #endif
 
 struct sg_table;
