@@ -44,7 +44,7 @@ static ssize_t version_show(struct device *fwdev,
 {
 	struct tegrafw_data *tfw = fwdev->platform_data;
 	char *version_string;
-	char reader_string[TFW_VERSION_MAX_SIZE];
+	char reader_string[TFW_VERSION_MAX_SIZE_DEF];
 	ssize_t r;
 
 	mutex_lock(&tfw->lock);

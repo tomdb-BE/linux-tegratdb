@@ -27,6 +27,7 @@
 #include <linux/iopoll.h>
 #include <linux/irqdomain.h>
 #include <linux/irq.h>
+#include <linux/irqchip/tegra.h>
 #include <linux/kernel.h>
 #include <linux/of_address.h>
 #include <linux/of_clk.h>
@@ -505,6 +506,16 @@ static void tegra_pmc_scratch_writel(struct tegra_pmc *pmc, u32 value,
 	else
 		writel(value, pmc->scratch + offset);
 }
+
+#ifdef CONFIG_PM_SLEEP
+int tegra_read_wake_status(u32 *wake_status)
+{
+        if (soc_is_tegra186_n_later())
+                return tegra18x_read_wake_status(wake_status);
+
+        return 0;
+}
+#endif
 
 /*
  * TODO Figure out a way to call this with the struct tegra_pmc * passed in.

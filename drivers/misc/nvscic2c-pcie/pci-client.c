@@ -505,6 +505,8 @@ pci_client_change_link_status(void *pci_client_h,
 	struct event_t *event = NULL;
 	struct callback_ops *ops = NULL;
 	struct pci_client_t *ctx = (struct pci_client_t *)pci_client_h;
+	unsigned long link_status_mem_phys_address;
+	size_t link_status_mem_size;
 
 	if (WARN_ON(!ctx))
 		return -EINVAL;
@@ -520,8 +522,9 @@ pci_client_change_link_status(void *pci_client_h,
 	 */
 	atomic_set(&ctx->link_status, status);
 	*((enum nvscic2c_pcie_link *)ctx->link_status_mem.pva) = status;
-	dcache_clean_inval_poc(ctx->link_status_mem.phys_addr,
-			    ctx->link_status_mem.phys_addr + ctx->link_status_mem.size);
+	link_status_mem_phys_address = *(enum nvscic2c_pcie_link *)ctx->link_status_mem.phys_addr;
+	link_status_mem_size = *(enum nvscic2c_pcie_link *)ctx->link_status_mem.size;
+	dcache_clean_inval_poc((unsigned long) link_status_mem_phys_address, (unsigned long) link_status_mem_phys_address + link_status_mem_size);
 
 	/* interrupt registered users. */
 	mutex_lock(&ctx->event_tbl_lock);

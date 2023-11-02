@@ -24,6 +24,26 @@ static const struct of_device_id tegra_machine_match[] = {
 	{ }
 };
 
+/* Before T18x architecture */
+static const struct of_device_id tegra210_le_machine_match[] = {
+        { .compatible = "nvidia,tegra20", },
+        { .compatible = "nvidia,tegra30", },
+        { .compatible = "nvidia,tegra114", },
+        { .compatible = "nvidia,tegra124", },
+        { .compatible = "nvidia,tegra132", },
+        { .compatible = "nvidia,tegra210", },
+        { .compatible = "nvidia,tegra210b01", },
+        { }
+};
+
+/* T186 and later architecture */
+static const struct of_device_id tegra186_ge_machine_match[] = {
+        { .compatible = "nvidia,tegra186", },
+        { .compatible = "nvidia,tegra194", },
+        { }
+};
+
+
 bool soc_is_tegra(void)
 {
 	const struct of_device_id *match;
@@ -128,3 +148,32 @@ int devm_tegra_core_dev_init_opp_table(struct device *dev,
 	return 0;
 }
 EXPORT_SYMBOL_GPL(devm_tegra_core_dev_init_opp_table);
+
+bool soc_is_tegra210_n_before(void)
+{
+        struct device_node *root;
+
+        root = of_find_node_by_path("/");
+        if (!root)
+                return false;
+
+        return of_match_node(tegra210_le_machine_match, root) != NULL;
+}
+EXPORT_SYMBOL(soc_is_tegra210_n_before);
+
+bool soc_is_tegra186_n_later(void)
+{
+        const struct of_device_id *match;
+        struct device_node *root;
+
+        root = of_find_node_by_path("/");
+        if (!root)
+                return false;
+
+        match = of_match_node(tegra186_ge_machine_match, root);
+        of_node_put(root);
+
+        return match != NULL;
+}
+EXPORT_SYMBOL(soc_is_tegra186_n_later);
+

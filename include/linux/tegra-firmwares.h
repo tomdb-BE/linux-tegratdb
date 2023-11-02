@@ -16,7 +16,8 @@
 /*
  * max size of version string
  */
-static const size_t TFW_VERSION_MAX_SIZE = 256;
+#define TFW_VERSION_MAX_SIZE_DEF	256
+static const size_t TFW_VERSION_MAX_SIZE = TFW_VERSION_MAX_SIZE_DEF;
 
 #if IS_ENABLED(CONFIG_TEGRA_FIRMWARES_CLASS)
 

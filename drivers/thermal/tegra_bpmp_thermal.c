@@ -39,8 +39,6 @@
 #define CREATE_TRACE_POINTS
 #include <trace/events/bpmp_thermal.h>
 
-#define CPUFREQ_ADJUST                        (0)
-
 struct tegra_bpmp_thermal_zone {
 	struct tegra_bpmp_thermal *tegra;
 	struct thermal_zone_device *tzd;
@@ -241,15 +239,18 @@ static int tegra_bpmp_thermal_abi_probe(void)
 #ifdef CONFIG_DEBUG_FS
 static void tegra_bpmp_thermal_dbgfs_init(struct platform_device *pdev)
 {
-	struct dentry *root;
+	struct dentry *root, *file;
 	struct tegra_bpmp_thermal *tegra = platform_get_drvdata(pdev);
 
 	root = debugfs_create_dir("tegra_bpmp_thermal", NULL);
 	if (!root)
 		goto err;
 
-	debugfs_create_u32("therm-profile", S_IRUGO, root,
+	file = debugfs_create_u32("therm-profile", S_IRUGO, root,
 				  &tegra->profile_id);
+	if (!file)
+		goto err;
+
 	return;
 err:
 	dev_err(tegra->dev, "debugfs init failed\n");

@@ -2,9 +2,9 @@ GCOV_PROFILE := y
 
 subdir-ccflags-y := -Werror
 
-include $(srctree)/drivers/video/tegra/nvmap/Makefile.memory.configs
+include drivers/video/tegra/nvmap/Makefile.memory.configs
 
-ccflags-y += -I$(srctree.nvidia)/include/
+ccflags-y += -I$(srctree)/include/
 
 ifeq ($(NVMAP_CONFIG), y)
 # Build NvMap only when NVMAP_CONFIG is set to y

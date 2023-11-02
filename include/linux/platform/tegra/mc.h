@@ -52,6 +52,7 @@ extern void __iomem *mssnvlink_regs[MC_MAX_MSSNVLINK_HUBS];
 #else
 #include <soc/tegra/fuse.h>
 #endif
+#define MC_HUB_INTMASK                                          0xf50
 
 /**
  * Check if the MC has more than 1 channel.

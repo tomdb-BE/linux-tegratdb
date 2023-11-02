@@ -52,7 +52,6 @@ obj-y				+= intel/
 obj-$(CONFIG_TI_SOC_THERMAL)	+= ti-soc-thermal/
 obj-y				+= st/
 obj-$(CONFIG_QCOM_TSENS)	+= qcom/
-obj-y				+= tegra/
 obj-$(CONFIG_HISI_THERMAL)     += hisi_thermal.o
 obj-$(CONFIG_MTK_THERMAL)	+= mtk_thermal.o
 obj-$(CONFIG_GENERIC_ADC_THERMAL)	+= thermal-generic-adc.o
@@ -67,8 +66,6 @@ ccflags-y += -I$(srctree)/drivers/thermal
 thermal_sys-$(CONFIG_THERMAL_GOV_CONTINUOUS) += continuous_thermal_gov.o
 
 obj-$(CONFIG_NV_TEGRA_BPMP) += tegra_bpmp_thermal.o
-obj-$(CONFIG_TEGRA_THERMAL_THROTTLE) += tegra_throttle.o
-obj-$(CONFIG_TEGRA_THERMAL_THROTTLE) += tegra_thermal_throttle.o
 obj-$(CONFIG_PWM_FAN) += pwm_fan.o
 obj-$(CONFIG_TEGRA23X_OC_EVENT) += tegra23x_oc_event.o
 obj-$(CONFIG_TEGRA19X_OC_EVENT) += tegra19x_oc_event.o

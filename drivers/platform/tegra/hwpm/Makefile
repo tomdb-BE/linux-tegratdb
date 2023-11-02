@@ -4,9 +4,9 @@
 
 GCOV_PROFILE := y
 
-ccflags-y += -I$(srctree.nvidia)/drivers/platform/tegra/hwpm
-ccflags-y += -I$(srctree.nvidia)/drivers/platform/tegra/hwpm/include
-ccflags-y += -I$(srctree.nvidia)/include
+ccflags-y += -I$(srctree)/drivers/platform/tegra/hwpm
+ccflags-y += -I$(srctree)/drivers/platform/tegra/hwpm/include
+ccflags-y += -I$(srctree)/include
 
 obj-$(CONFIG_DEBUG_FS) += os/linux/tegra_hwpm_debugfs.o
 obj-y += os/linux/tegra_hwpm_linux.o

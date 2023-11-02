@@ -21,7 +21,6 @@
 #include <linux/file.h>
 #include <linux/fs.h>
 #include <linux/of.h>
-#include <linux/fdtable.h>
 #include <linux/nvhost.h>
 #include <linux/nvhost_t194.h>
 #include <linux/platform_device.h>
@@ -39,6 +38,7 @@
 #include "stream-extensions.h"
 #include "vmap.h"
 
+extern int close_fd(unsigned fd);
 /* forward declaration.*/
 struct stream_ext_ctx_t;
 struct stream_ext_obj;

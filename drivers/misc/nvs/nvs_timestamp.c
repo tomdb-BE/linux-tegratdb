@@ -22,7 +22,7 @@ s64 nvs_timestamp(void)
 	struct timespec64 ts;
 
 	ktime_get_ts64(&ts);
-	return timespec64_to_ns(&ts);
+	return timespec_to_ns(&ts);
 }
 EXPORT_SYMBOL_GPL(nvs_timestamp);
 

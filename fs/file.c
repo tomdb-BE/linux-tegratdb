@@ -87,6 +87,21 @@ static void copy_fdtable(struct fdtable *nfdt, struct fdtable *ofdt)
 	copy_fd_bitmaps(nfdt, ofdt, ofdt->max_fds);
 }
 
+/*
+ * Note how the fdtable bitmap allocations very much have to be a multiple of
+ * BITS_PER_LONG. This is not only because we walk those things in chunks of
+ * 'unsigned long' in some places, but simply because that is how the Linux
+ * kernel bitmaps are defined to work: they are not "bits in an array of bytes",
+ * they are very much "bits in an array of unsigned long".
+ *
+ * The ALIGN(nr, BITS_PER_LONG) here is for clarity: since we just multiplied
+ * by that "1024/sizeof(ptr)" before, we already know there are sufficient
+ * clear low bits. Clang seems to realize that, gcc ends up being confused.
+ *
+ * On a 128-bit machine, the ALIGN() would actually matter. In the meantime,
+ * let's consider it documentation (and maybe a test-case for gcc to improve
+ * its code generation ;)
+ */
 static struct fdtable * alloc_fdtable(unsigned int nr)
 {
 	struct fdtable *fdt;
@@ -102,6 +117,7 @@ static struct fdtable * alloc_fdtable(unsigned int nr)
 	nr /= (1024 / sizeof(struct file *));
 	nr = roundup_pow_of_two(nr + 1);
 	nr *= (1024 / sizeof(struct file *));
+	nr = ALIGN(nr, BITS_PER_LONG);
 	/*
 	 * Note that this can drive nr *below* what we had passed if sysctl_nr_open
 	 * had been set lower between the check in expand_files() and here.  Deal
@@ -269,6 +285,19 @@ static unsigned int count_open_files(struct fdtable *fdt)
 	return i;
 }
 
+/*
+ * Note that a sane fdtable size always has to be a multiple of
+ * BITS_PER_LONG, since we have bitmaps that are sized by this.
+ *
+ * 'max_fds' will normally already be properly aligned, but it
+ * turns out that in the close_range() -> __close_range() ->
+ * unshare_fd() -> dup_fd() -> sane_fdtable_size() we can end
+ * up having a 'max_fds' value that isn't already aligned.
+ *
+ * Rather than make close_range() have to worry about this,
+ * just make that BITS_PER_LONG alignment be part of a sane
+ * fdtable size. Becuase that's really what it is.
+ */
 static unsigned int sane_fdtable_size(struct fdtable *fdt, unsigned int max_fds)
 {
 	unsigned int count;
@@ -276,7 +305,7 @@ static unsigned int sane_fdtable_size(struct fdtable *fdt, unsigned int max_fds)
 	count = count_open_files(fdt);
 	if (max_fds < NR_OPEN_DEFAULT)
 		max_fds = NR_OPEN_DEFAULT;
-	return min(count, max_fds);
+	return ALIGN(min(count, max_fds), BITS_PER_LONG);
 }
 
 /*
@@ -525,6 +554,64 @@ out:
 	return error;
 }
 
+int __alloc_fd(struct files_struct *files,
+               unsigned start, unsigned end, unsigned flags)
+{
+        unsigned int fd;
+        int error;
+        struct fdtable *fdt;
+
+        spin_lock(&files->file_lock);
+repeat:
+        fdt = files_fdtable(files);
+        fd = start;
+        if (fd < files->next_fd)
+                fd = files->next_fd;
+
+        if (fd < fdt->max_fds)
+                fd = find_next_fd(fdt, fd);
+
+        /*
+         * N.B. For clone tasks sharing a files structure, this test
+         * will limit the total number of files that can be opened.
+         */
+        error = -EMFILE;
+        if (fd >= end)
+                goto out;
+
+        error = expand_files(files, fd);
+        if (error < 0)
+                goto out;
+
+        /*
+         * If we needed to expand the fs array we
+         * might have blocked - try again.
+         */
+        if (error)
+                goto repeat;
+
+        if (start <= files->next_fd)
+                files->next_fd = fd + 1;
+
+        __set_open_fd(fd, fdt);
+        if (flags & O_CLOEXEC)
+                __set_close_on_exec(fd, fdt);
+        else
+                __clear_close_on_exec(fd, fdt);
+        error = fd;
+#if 1
+        /* Sanity check */
+        if (rcu_access_pointer(fdt->fd[fd]) != NULL) {
+                printk(KERN_WARNING "alloc_fd: slot %d not NULL!\n", fd);
+                rcu_assign_pointer(fdt->fd[fd], NULL);
+        }
+#endif
+
+out:
+        spin_unlock(&files->file_lock);
+        return error;
+}
+
 int __get_unused_fd_flags(unsigned flags, unsigned long nofile)
 {
 	return alloc_fd(0, nofile, flags);
@@ -617,6 +704,7 @@ static struct file *pick_file(struct files_struct *files, unsigned fd)
 		file = ERR_PTR(-EINVAL);
 		goto out_unlock;
 	}
+	fd = array_index_nospec(fd, fdt->max_fds);
 	file = fdt->fd[fd];
 	if (!file) {
 		file = ERR_PTR(-EBADF);
@@ -841,24 +929,68 @@ void do_close_on_exec(struct files_struct *files)
 	spin_unlock(&files->file_lock);
 }
 
+static inline struct file *__fget_files_rcu(struct files_struct *files,
+	unsigned int fd, fmode_t mask, unsigned int refs)
+{
+	for (;;) {
+		struct file *file;
+		struct fdtable *fdt = rcu_dereference_raw(files->fdt);
+		struct file __rcu **fdentry;
+
+		if (unlikely(fd >= fdt->max_fds))
+			return NULL;
+
+		fdentry = fdt->fd + array_index_nospec(fd, fdt->max_fds);
+		file = rcu_dereference_raw(*fdentry);
+		if (unlikely(!file))
+			return NULL;
+
+		if (unlikely(file->f_mode & mask))
+			return NULL;
+
+		/*
+		 * Ok, we have a file pointer. However, because we do
+		 * this all locklessly under RCU, we may be racing with
+		 * that file being closed.
+		 *
+		 * Such a race can take two forms:
+		 *
+		 *  (a) the file ref already went down to zero,
+		 *      and get_file_rcu_many() fails. Just try
+		 *      again:
+		 */
+		if (unlikely(!get_file_rcu_many(file, refs)))
+			continue;
+
+		/*
+		 *  (b) the file table entry has changed under us.
+		 *       Note that we don't need to re-check the 'fdt->fd'
+		 *       pointer having changed, because it always goes
+		 *       hand-in-hand with 'fdt'.
+		 *
+		 * If so, we need to put our refs and try again.
+		 */
+		if (unlikely(rcu_dereference_raw(files->fdt) != fdt) ||
+		    unlikely(rcu_dereference_raw(*fdentry) != file)) {
+			fput_many(file, refs);
+			continue;
+		}
+
+		/*
+		 * Ok, we have a ref to the file, and checked that it
+		 * still exists.
+		 */
+		return file;
+	}
+}
+
 static struct file *__fget_files(struct files_struct *files, unsigned int fd,
 				 fmode_t mask, unsigned int refs)
 {
 	struct file *file;
 
 	rcu_read_lock();
-loop:
-	file = files_lookup_fd_rcu(files, fd);
-	if (file) {
-		/* File object ref couldn't be taken.
-		 * dup2() atomicity guarantee is the reason
-		 * we loop to catch the new file (or NULL pointer)
-		 */
-		if (file->f_mode & mask)
-			file = NULL;
-		else if (!get_file_rcu_many(file, refs))
-			goto loop;
-	}
+	file = __fget_files_rcu(files, fd, mask, refs);
 	rcu_read_unlock();
 
 	return file;
@@ -956,7 +1088,16 @@ static unsigned long __fget_light(unsigned int fd, fmode_t mask)
 	struct files_struct *files = current->files;
 	struct file *file;
 
-	if (atomic_read(&files->count) == 1) {
+	/*
+	 * If another thread is concurrently calling close_fd() followed
+	 * by put_files_struct(), we must not observe the old table
+	 * entry combined with the new refcount - otherwise we could
+	 * return a file that is concurrently being freed.
+	 *
+	 * atomic_read_acquire() pairs with atomic_dec_and_test() in
+	 * put_files_struct().
+	 */
+	if (atomic_read_acquire(&files->count) == 1) {
 		file = files_lookup_fd_raw(files, fd);
 		if (!file || unlikely(file->f_mode & mask))
 			return 0;
@@ -979,16 +1120,30 @@ unsigned long __fdget_raw(unsigned int fd)
 	return __fget_light(fd, 0);
 }
 
+/*
+ * Try to avoid f_pos locking. We only need it if the
+ * file is marked for FMODE_ATOMIC_POS, and it can be
+ * accessed multiple ways.
+ *
+ * Always do it for directories, because pidfd_getfd()
+ * can make a file accessible even if it otherwise would
+ * not be, and for directories this is a correctness
+ * issue, not a "POSIX requirement".
+ */
+static inline bool file_needs_f_pos_lock(struct file *file)
+{
+	return (file->f_mode & FMODE_ATOMIC_POS) &&
+		(file_count(file) > 1 || S_ISDIR(file_inode(file)->i_mode));
+}
+
 unsigned long __fdget_pos(unsigned int fd)
 {
 	unsigned long v = __fdget(fd);
 	struct file *file = (struct file *)(v & ~3);
 
-	if (file && (file->f_mode & FMODE_ATOMIC_POS)) {
-		if (file_count(file) > 1) {
-			v |= FDPUT_POS_UNLOCK;
-			mutex_lock(&file->f_pos_lock);
-		}
+	if (file && file_needs_f_pos_lock(file)) {
+		v |= FDPUT_POS_UNLOCK;
+		mutex_lock(&file->f_pos_lock);
 	}
 	return v;
 }

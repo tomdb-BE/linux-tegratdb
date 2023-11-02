@@ -25,6 +25,8 @@
 #include <soc/tegra/bpmp.h>
 #endif
 
+#define CPUFREQ_ADJUST          (0)
+
 /* keep in sync with tegra_bwmgr_client_names */
 enum tegra_bwmgr_client_id {
 	TEGRA_BWMGR_CLIENT_CPU_CLUSTER_0,

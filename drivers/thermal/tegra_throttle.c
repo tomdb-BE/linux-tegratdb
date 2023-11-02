@@ -36,7 +36,6 @@
 #define MAX_THROT_TABLE_SIZE	(64)
 #define NO_CAP			(ULONG_MAX) /* no cap */
 #define CPU_THROT_LOW		0 /* lowest throttle freq. only used for CPU */
-#define CPUFREQ_ADJUST		(0)
 
 static DEFINE_MUTEX(bthrot_list_lock);
 static LIST_HEAD(bthrot_list);
@@ -111,7 +110,7 @@ static DEFINE_PER_CPU(unsigned long, max_cpu_rate);
 static int tegra_throttle_policy_notifier(struct notifier_block *nb,
 					unsigned long event, void *data)
 {
-	struct cpufreq_policy_data *policy = data;
+	struct cpufreq_policy *policy = data;
 	unsigned long cpu_max;
 
 	if (event != CPUFREQ_ADJUST)
@@ -213,7 +212,7 @@ static void tegra_throttle_set_cap_clk(unsigned long cap_rate,
 	case THROT_GPU:
 		if (cap_rate == NO_CAP)
 			cap_rate = PM_QOS_GPU_FREQ_MAX_DEFAULT_VALUE;
-		cpu_latency_qos_update_request(&gpu_cap, cap_rate);
+		pm_qos_update_request(&gpu_cap, cap_rate);
 		CAP_TBL_CAP_FREQ(cap_clk_index) = max_rate;
 		break;
 	default:
@@ -454,7 +453,8 @@ static int parse_throttle_dt_data(struct device *dev)
 			CAP_TBL_CAP_TYPE(i) = THROT_EMC;
 		else if (!strcmp("gpu", CAP_TBL_CAP_NAME(i))) {
 			CAP_TBL_CAP_TYPE(i) = THROT_GPU;
-			cpu_latency_qos_add_request(&gpu_cap, PM_QOS_GPU_FREQ_MAX_DEFAULT_VALUE);
+			pm_qos_add_request(&gpu_cap, PM_QOS_GPU_FREQ_MAX,
+					   PM_QOS_GPU_FREQ_MAX_DEFAULT_VALUE);
 		}
 
 		if (CAP_TBL_CAP_TYPE(i) == THROT_DEFAULT) {

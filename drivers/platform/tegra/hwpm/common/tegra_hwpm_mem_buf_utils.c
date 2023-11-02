@@ -56,6 +56,8 @@ static int tegra_hwpm_dma_map_stream_buffer(struct tegra_soc_hwpm *hwpm,
 static int tegra_hwpm_dma_map_mem_bytes_buffer(struct tegra_soc_hwpm *hwpm,
 	struct tegra_soc_hwpm_alloc_pma_stream *alloc_pma_stream)
 {
+	int ret;
+
 	tegra_hwpm_fn(hwpm, " ");
 
 	hwpm->mem_bytes_dma_buf = dma_buf_get(tegra_hwpm_safe_cast_u64_to_s32(
@@ -79,8 +81,8 @@ static int tegra_hwpm_dma_map_mem_bytes_buffer(struct tegra_soc_hwpm *hwpm,
 		return PTR_ERR(hwpm->mem_bytes_sgt);
 	}
 
-	hwpm->mem_bytes_kernel = dma_buf_vmap(hwpm->mem_bytes_dma_buf);
-	if (!hwpm->mem_bytes_kernel) {
+	ret = dma_buf_vmap(hwpm->mem_bytes_dma_buf, hwpm->mem_bytes_kernel);
+	if (!ret) {
 		tegra_hwpm_err(hwpm,
 			"Unable to map mem_bytes buffer into kernel VA space");
 		return -ENOMEM;
