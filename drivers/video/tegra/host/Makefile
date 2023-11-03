@@ -1,19 +1,18 @@
 GCOV_PROFILE := y
 
 ccflags-y += -I$(srctree)/drivers/video/tegra/host
+ccflags-y += -I$(srctree)/drivers/devfreq
 ccflags-y += -I$(srctree)/include
-ccflags-y += -Idrivers/video/tegra/host
-ccflags-y += -Idrivers/devfreq
 ccflags-y += -Wno-multichar
 
 ifeq ($(CONFIG_TEGRA_T239_GRHOST),y)
-	ccflags-y += -I$(srctree)/include
-	ccflags-y += -I$(srctree)/drivers/video/tegra/host
+	ccflags-y += -I$(srctree.nvidia-t239)/include
+	ccflags-y += -I$(srctree.nvidia-t239)/drivers/video/tegra/host
 endif
 
 ccflags-y += -Werror -Wno-vla
 
-nvhost-y += \
+obj-y += \
 	nvhost_acm.o \
 	nvhost_syncpt.o \
 	nvhost_cdma.o \
@@ -64,7 +63,9 @@ obj-$(CONFIG_TEGRA_GRHOST) += nvhost.o
 
 obj-$(CONFIG_TEGRA_GRHOST_ISP) += isp/
 obj-$(CONFIG_TEGRA_GRHOST_NVCSI) += nvcsi/
+ifneq ($(filter y,$(CONFIG_ARCH_TEGRA_18x_SOC) $(CONFIG_ARCH_TEGRA_186_SOC)),)
 obj-y += vi/
+endif
 
 obj-$(CONFIG_TEGRA_GRHOST_CAPTURE_SUPPORT) += capture/
 obj-$(CONFIG_TEGRA_GRHOST_PVA) += pva/

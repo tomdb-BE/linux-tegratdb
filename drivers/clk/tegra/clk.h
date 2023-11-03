@@ -393,12 +393,14 @@ struct tegra_clk_pll {
  * @parent:	name of the parent of the audio pll
  */
 struct tegra_audio_clk_info {
-	char *name;
-	struct tegra_clk_pll_params *pll_params;
-	int clk_id;
-	char *parent;
+        char *name;
+        struct tegra_clk_pll_params *pll_params;
+        int clk_id;
+        char *parent;
+        struct clk *(*register_fn)(const char *name, const char *parent_name,
+                void __iomem *clk_base, void __iomem *pmc, unsigned long flags,
+                struct tegra_clk_pll_params *pll_params, spinlock_t *lock);
 };
-
 extern const struct clk_ops tegra_clk_pll_ops;
 extern const struct clk_ops tegra_clk_plle_ops;
 struct clk *tegra_clk_register_pll(const char *name, const char *parent_name,
@@ -803,11 +805,14 @@ struct clk *tegra_clk_register_sdmmc_mux_div(const char *name,
  * @state:	enable/disable
  */
 struct tegra_clk_init_table {
-	unsigned int	clk_id;
-	unsigned int	parent_id;
-	unsigned long	rate;
-	int		state;
+        unsigned int    clk_id;
+        unsigned int    parent_id;
+        unsigned long   rate;
+        int             state;
+        u32             flags;
 };
+
+#define TEGRA_TABLE_RATE_CHANGE_OVERCLOCK       BIT(0)
 
 /**
  * struct clk_duplicate - duplicate clocks
@@ -831,6 +836,7 @@ struct tegra_clk_duplicate {
 struct tegra_clk {
 	int			dt_id;
 	bool			present;
+        bool                    use_integer_div;
 };
 
 struct tegra_devclk {
@@ -905,6 +911,8 @@ typedef void (*tegra_clk_apply_init_table_func)(void);
 extern tegra_clk_apply_init_table_func tegra_clk_apply_init_table;
 int tegra_pll_wait_for_lock(struct tegra_clk_pll *pll);
 u16 tegra_pll_get_fixed_mdiv(struct clk_hw *hw, unsigned long input_rate);
+unsigned long tegra_pll_adjust_vco_min_sdm(struct tegra_clk_pll_params *params,
+                                unsigned long parent_rate, u32 sdm_coeff);
 int tegra_pll_p_div_to_hw(struct tegra_clk_pll *pll, u8 p_div);
 int div_frac_get(unsigned long rate, unsigned parent_rate, u8 width,
 		 u8 frac_width, u8 flags);

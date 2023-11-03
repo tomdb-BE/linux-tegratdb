@@ -18,6 +18,7 @@
 #include <linux/syscore_ops.h>
 
 #include "clk.h"
+#include "clk-tegra.h"
 #include "clk-dfll.h"
 #include "clk-id.h"
 
