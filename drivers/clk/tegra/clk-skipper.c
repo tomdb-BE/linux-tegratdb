@@ -11,6 +11,7 @@
 #include <linux/clk-provider.h>
 
 #include "clk.h"
+#include "clk-tegra.h"
 
 #define SKIPPER_DIVISOR 256
 #define SKIPPER_ENABLE BIT(31)

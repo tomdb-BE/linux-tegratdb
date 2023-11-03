@@ -9,6 +9,7 @@
 
 #include "clk.h"
 #include "clk-id.h"
+#include "clk-tegra.h"
 
 struct tegra_shared_clk {
 	char *name;

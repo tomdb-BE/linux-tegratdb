@@ -16,6 +16,7 @@
 #endif
 
 #include "clk.h"
+#include "clk-tegra.h"
 
 #define KHz 1000
 

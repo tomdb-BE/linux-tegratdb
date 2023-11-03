@@ -842,6 +842,31 @@ const char *esr_get_class_string(u32 esr)
 	return esr_class_str[ESR_ELx_EC(esr)];
 }
 
+#ifdef CONFIG_TEGRA_A57_SERR
+static LIST_HEAD(serr_hook);
+static DEFINE_RAW_SPINLOCK(serr_lock);
+
+void register_serr_hook(struct serr_hook *hook)
+{
+        unsigned long flags;
+
+        raw_spin_lock_irqsave(&serr_lock, flags);
+        list_add(&hook->node, &serr_hook);
+        raw_spin_unlock_irqrestore(&serr_lock, flags);
+}
+EXPORT_SYMBOL(register_serr_hook);
+
+void unregister_serr_hook(struct serr_hook *hook)
+{
+        unsigned long flags;
+
+        raw_spin_lock_irqsave(&serr_lock, flags);
+        list_del(&hook->node);
+        raw_spin_unlock_irqrestore(&serr_lock, flags);
+}
+EXPORT_SYMBOL(unregister_serr_hook);
+#endif
+
 /*
  * bad_el0_sync handles unexpected, but potentially recoverable synchronous
  * exceptions taken from EL0.

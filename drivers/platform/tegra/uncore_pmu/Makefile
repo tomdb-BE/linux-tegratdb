@@ -4,7 +4,7 @@
 GCOV_PROFILE := y
 
 ccflags-y += -I$(srctree)/drivers/platform/tegra/include \
-							-I$(srctree.nvidia)/drivers/platform/tegra/
+							-I$(srctree)/drivers/platform/tegra/
 
 ccflags-y += -Werror
 

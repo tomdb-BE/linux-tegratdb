@@ -39,6 +39,11 @@ struct of_phandle_args;
 #define PRE_RATE_CHANGE			BIT(0)
 #define POST_RATE_CHANGE		BIT(1)
 #define ABORT_RATE_CHANGE		BIT(2)
+#define PRE_SUBTREE_CHANGE		BIT(3)
+#define POST_SUBTREE_CHANGE             BIT(4)
+#define PRE_PARENT_CHANGE               BIT(5)
+#define POST_PARENT_CHANGE              BIT(6)
+#define ABORT_PARENT_CHANGE             BIT(7)
 
 /**
  * struct clk_notifier - associate a clk with a notifier

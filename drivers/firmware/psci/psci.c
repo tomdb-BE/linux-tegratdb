@@ -75,8 +75,6 @@ struct psci_0_1_function_ids get_psci_0_1_function_ids(void)
 				(PSCI_1_0_EXT_POWER_STATE_ID_MASK | \
 				PSCI_1_0_EXT_POWER_STATE_TYPE_MASK)
 
-struct extended_psci_operations extended_ops;
-
 static u32 psci_cpu_suspend_feature;
 static bool psci_system_reset2_supported;
 

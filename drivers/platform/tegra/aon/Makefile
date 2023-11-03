@@ -3,7 +3,7 @@
 #
 GCOV_PROFILE := y
 
-ccflags-y += -I$(srctree.nvidia)/drivers/platform/tegra/aon/include
+ccflags-y += -I$(srctree)/drivers/platform/tegra/aon/include
 ccflags-y += -I$(srctree)/include
 
 ccflags-y += -Werror

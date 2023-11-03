@@ -551,7 +551,7 @@ static int tegra_i2c_init_dma_param(struct tegra_i2c_dev *i2c_dev,
 	int ret;
 	struct dma_slave_config dma_sconfig;
 
-	dma_chan = dma_request_slave_channel_reason(i2c_dev->dev,
+	dma_chan = dma_request_chan(i2c_dev->dev,
 						dma_to_memory ? "rx" : "tx");
 	if (IS_ERR(dma_chan)) {
 		ret = PTR_ERR(dma_chan);
@@ -2133,7 +2133,7 @@ unprepare_fast_clk:
 	return ret;
 }
 
-static int tegra_i2c_remove(struct platform_device *pdev)
+static void tegra_i2c_remove(struct platform_device *pdev)
 {
 	struct tegra_i2c_dev *i2c_dev = platform_get_drvdata(pdev);
 
@@ -2152,8 +2152,6 @@ static int tegra_i2c_remove(struct platform_device *pdev)
 	clk_unprepare(i2c_dev->div_clk);
 	if (!i2c_dev->hw->has_single_clk_source)
 		clk_unprepare(i2c_dev->fast_clk);
-
-	return 0;
 }
 
 static void tegra_i2c_shutdown(struct platform_device *pdev)
@@ -2170,13 +2168,13 @@ static int tegra_i2c_suspend(struct device *dev)
 {
 	struct tegra_i2c_dev *i2c_dev = dev_get_drvdata(dev);
 
-	i2c_lock_adapter(&i2c_dev->adapter);
+	i2c_lock_bus(&i2c_dev->adapter, I2C_LOCK_ROOT_ADAPTER);
 	i2c_dev->is_suspended = true;
 
 	if (i2c_dev->is_clkon_always)
 		tegra_i2c_clock_disable(i2c_dev);
 
-	i2c_unlock_adapter(&i2c_dev->adapter);
+	i2c_unlock_bus(&i2c_dev->adapter, I2C_LOCK_ROOT_ADAPTER);
 
 	return 0;
 }
@@ -2186,12 +2184,12 @@ static int tegra_i2c_resume(struct device *dev)
 	struct tegra_i2c_dev *i2c_dev = dev_get_drvdata(dev);
 	int ret;
 
-	i2c_lock_adapter(&i2c_dev->adapter);
+	i2c_lock_bus(&i2c_dev->adapter, I2C_LOCK_ROOT_ADAPTER);
 
 	if (!i2c_dev->hw->has_powergate) {
 		ret = tegra_i2c_init(i2c_dev);
 		if (ret) {
-			i2c_unlock_adapter(&i2c_dev->adapter);
+			i2c_unlock_bus(&i2c_dev->adapter, I2C_LOCK_ROOT_ADAPTER);
 			return ret;
 		}
 	}
@@ -2205,7 +2203,7 @@ static int tegra_i2c_resume(struct device *dev)
 		}
 	}
 	i2c_dev->is_suspended = false;
-	i2c_unlock_adapter(&i2c_dev->adapter);
+	i2c_unlock_bus(&i2c_dev->adapter, I2C_LOCK_ROOT_ADAPTER);
 
 	return 0;
 }
@@ -2218,7 +2216,7 @@ static SIMPLE_DEV_PM_OPS(tegra_i2c_pm, tegra_i2c_suspend, tegra_i2c_resume);
 
 static struct platform_driver tegra_i2c_driver = {
 	.probe   = tegra_i2c_probe,
-	.remove  = tegra_i2c_remove,
+	.remove_new  = tegra_i2c_remove,
 	.shutdown = tegra_i2c_shutdown,
 	.driver  = {
 		.name  = "tegra-vii2c",

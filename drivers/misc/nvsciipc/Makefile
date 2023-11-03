@@ -14,7 +14,7 @@
 #
 
 ccflags-y += -Werror
-ccflags-y += -I$(srctree.nvidia)/include/
+ccflags-y += -I$(srctree)/include/
 
 
 # Make as module for OOT module build

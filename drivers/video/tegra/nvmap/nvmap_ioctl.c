@@ -36,7 +36,7 @@
 #include <asm/uaccess.h>
 #include <soc/tegra/common.h>
 #include <trace/events/nvmap.h>
-
+#include <asm-generic/dma-coherent.h>
 #ifdef NVMAP_CONFIG_SCIIPC
 #include <linux/nvscierror.h>
 #include <linux/nvsciipc_interface.h>

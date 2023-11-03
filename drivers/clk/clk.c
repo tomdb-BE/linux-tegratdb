@@ -2022,8 +2022,9 @@ static struct clk_core *clk_propagate_rate_change(struct clk_core *core,
 	struct clk_core *child, *tmp_clk, *fail_clk = NULL;
 	int ret = NOTIFY_DONE;
 
-	if (core->rate == core->new_rate)
-		return NULL;
+        if ((core->rate == core->new_rate) &&
+            !(core->flags & CLK_SET_RATE_NOCACHE))
+                return NULL;
 
 	if (core->notifier_count) {
 		ret = __clk_notify(core, event, core->rate, core->new_rate);
@@ -2119,7 +2120,8 @@ static void clk_change_rate(struct clk_core *core)
 	if (core->flags & CLK_OPS_PARENT_ENABLE)
 		clk_core_disable_unprepare(parent);
 
-	if (core->notifier_count && old_rate != core->rate)
+        if (core->notifier_count && ((old_rate != core->rate) ||
+                                    (core->flags & CLK_SET_RATE_NOCACHE)))
 		__clk_notify(core, POST_RATE_CHANGE, old_rate, core->rate);
 
 	if (core->flags & CLK_RECALC_NEW_RATES)

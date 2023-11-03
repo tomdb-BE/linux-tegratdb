@@ -1,12 +1,12 @@
 ccflags-y := -Werror
 ccflags-y += -I$(srctree)/include
 ccflags-y += -I$(srctree)
-ccflags-y += -I$(srctree.nvidia)
-ccflags-y += -I$(srctree.nvidia)/drivers/platform/tegra/rtcpu
-ccflags-y += -I$(srctree.nvidia)/drivers/platform/tegra
+ccflags-y += -I$(srctree)
+ccflags-y += -I$(srctree)/drivers/platform/tegra/rtcpu
+ccflags-y += -I$(srctree)/drivers/platform/tegra
 
 obj-y += camera-diagnostics.o
-obj-y += debug.o
+#obj-y += debug.o
 obj-y += ivc-bus.o
 obj-y += tegra-sysfs-mbox.o
 obj-y += vi-notify.o

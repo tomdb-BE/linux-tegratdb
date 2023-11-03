@@ -150,7 +150,6 @@ struct pci_epc {
 	struct mutex			lock;
 	unsigned long			function_num_map;
 	struct atomic_notifier_head	notifier;
-	struct blocking_notifier_head   block_notifier;
 };
 
 /**
@@ -197,11 +196,6 @@ static inline int
 pci_epc_register_notifier(struct pci_epc *epc, struct notifier_block *nb)
 {
 	return atomic_notifier_chain_register(&epc->notifier, nb);
-}
-static inline int
-pci_epc_register_block_notifier(struct pci_epc *epc, struct notifier_block *nb)
-{
-        return blocking_notifier_chain_register(&epc->block_notifier, nb);
 }
 
 struct pci_epc *

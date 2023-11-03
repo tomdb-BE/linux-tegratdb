@@ -5,13 +5,9 @@ KBUILD_CFLAGS += -I$(srctree)/arch/arm/mach-tegra \
 		 -I$(srctree)/drivers/platform/tegra/ \
 		 -I$(srctree)/drivers/platform/tegra/rtcpu \
 		 -I$(srctree)/drivers/video/tegra/dc/ \
-		 -I$(srctree)/drivers/video/tegra/dc/panel/ 
+		 -I$(srctree)/drivers/video/tegra/dc/panel/
 
-subdir-ccflags-y += -I$(srctree)/drivers/platform/tegra/include
-
-obj-y                                   += tegra-safety-build.o
-obj-y                                   += tegra-hv-mode.o
-
+ccflags-y += -Werror
 obj-$(CONFIG_TEGRA_MCE) += mce/
 obj-$(CONFIG_NV_TEGRA_MC) += mc/
 obj-$(CONFIG_TEGRA_CBB_NOC) += cbb/
@@ -40,10 +36,10 @@ obj-$(CONFIG_ARCH_TEGRA_18x_SOC) += tegra18_cpu_debugfs.o
 obj-$(CONFIG_TEGRA_PM_DEBUG) += pm.o
 obj-$(CONFIG_TEGRA_PM_DEBUG) += pm_debugfs.o
 ifneq ($(filter y,$(CONFIG_ARCH_TEGRA_18x_SOC) $(CONFIG_ARCH_TEGRA_186_SOC)),)
-#obj-y += reboot-t18x.o
+obj-y += reboot-t18x.o
 endif
 ifneq ($(filter y,$(CONFIG_ARCH_TEGRA_18x_SOC) $(CONFIG_ARCH_TEGRA_186_SOC)),)
-#obj-y += pm-tegra186.o
+obj-y += pm-tegra186.o
 endif
 obj-$(CONFIG_TEGRA_AON) += tegra186_aondbg.o
 obj-$(CONFIG_TEGRA_ARI_MCA) += ari_mca.o
@@ -53,7 +49,7 @@ obj-$(CONFIG_TEGRA_18X_SERROR) += tegra18_a57_serr.o
 obj-$(CONFIG_TEGRA_CENTRAL_ACTMON) += cactmon.o
 obj-$(CONFIG_TEGRA_CENTRAL_ACTMON) += cactmon_t21x.o
 ifeq ($(CONFIG_HW_PERF_EVENTS), y)
-#obj-$(CONFIG_ARCH_TEGRA_18x_SOC) += tegra18_perf_uncore.o
+obj-$(CONFIG_ARCH_TEGRA_18x_SOC) += tegra18_perf_uncore.o
 endif
 obj-$(CONFIG_TEGRA_PTP_NOTIFIER) += ptp-notifier.o
 ifeq ($(CONFIG_DEBUG_FS), y)
@@ -63,6 +59,7 @@ obj-$(CONFIG_DENVER_MCA) += denver_mca.o
 obj-$(CONFIG_TEGRA_HV_XHCI_DEBUG) += tegra-hv-xhci-debug.o
 obj-$(CONFIG_TEGRA_SAFETY) += tegra-safety-ivc.o tegra-safety-dev.o
 obj-$(CONFIG_TEGRA_SAFETY) += tegra_l1ss_kernel_interface.o tegra_l1ss_cmd_resp_l2_interface.o tegra_l1ss.o
+
 obj-$(CONFIG_TEGRA_NVADSP) += nvadsp/
 
 obj-$(CONFIG_TEGRA_VIRT_AUDIO_IVC) += nvaudio_ivc/
@@ -93,7 +90,7 @@ endif
 endif
 
 ifdef CONFIG_ARCH_TEGRA_23x_SOC
-#obj-$(CONFIG_HW_PERF_EVENTS) += uncore_pmu/
+obj-$(CONFIG_HW_PERF_EVENTS) += uncore_pmu/
 endif
 
 obj-$(CONFIG_ARCH_TEGRA_210_SOC) += mselect.o

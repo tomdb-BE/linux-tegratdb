@@ -458,10 +458,6 @@ int __init pm_irq_init(void)
 	return 0;
 }
 #else /* CONFIG_PM_SLEEP */
-int tegra18x_read_wake_status(u32 *status)
-{
-	return 0;
-}
 #endif /* CONFIG_PM_SLEEP */
 
 #ifdef CONFIG_IRQ_DOMAIN_HIERARCHY

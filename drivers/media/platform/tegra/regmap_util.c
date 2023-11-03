@@ -1,7 +1,7 @@
 /*
  * regmap_util.c - utilities for writing regmap tables
  *
- * Copyright (c) 2013-2021, NVIDIA Corporation. All Rights Reserved.
+ * Copyright (c) 2013-2022, NVIDIA Corporation. All Rights Reserved.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
@@ -19,8 +19,6 @@
 #include <linux/regmap.h>
 #include <media/camera_common.h>
 
-MODULE_LICENSE("GPL v2");
-
 int
 regmap_util_write_table_8(struct regmap *regmap,
 			  const struct reg_8 table[],
@@ -33,7 +31,7 @@ regmap_util_write_table_8(struct regmap *regmap,
 	u8 val;
 
 	int range_start = -1;
-	int range_count = 0;
+	unsigned int range_count = 0;
 	/* bug 200048392 -
 	 * the vi i2c cannot take a FIFO buffer bigger than 16 bytes
 	 */
@@ -115,9 +113,9 @@ regmap_util_write_table_16_as_8(struct regmap *regmap,
 	u16 val;
 
 	int range_start = -1;
-	int range_count = 0;
+	unsigned int range_count = 0;
 	u8 range_vals[256];
-	int max_range_vals = ARRAY_SIZE(range_vals);
+	int max_range_vals = ARRAY_SIZE(range_vals) - 1;
 
 	for (next = table;; next++) {
 		/* If we have a range open and */

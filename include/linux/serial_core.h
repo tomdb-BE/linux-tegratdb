@@ -164,7 +164,6 @@ struct uart_port {
 	struct console		*cons;			/* struct console, if any */
 	/* flags must be updated while holding port mutex */
 	upf_t			flags;
-	bool                    rt_flush;
 
 	/*
 	 * These flags must be equivalent to the flags defined in

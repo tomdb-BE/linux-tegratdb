@@ -38,5 +38,5 @@ nvadsp-objs += adsp_lpthread.o
 endif
 
 ifeq ($(CONFIG_TEGRA_VIRT_AUDIO_IVC),y)
-ccflags-y += -I$(srctree.nvidia)/drivers/platform/tegra/nvaudio_ivc/
+ccflags-y += -I$(srctree)/drivers/platform/tegra/nvaudio_ivc/
 endif

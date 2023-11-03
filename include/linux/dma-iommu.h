@@ -22,10 +22,6 @@ void iommu_put_dma_cookie(struct iommu_domain *domain);
 void iommu_setup_dma_ops(struct device *dev, u64 dma_base, u64 dma_limit);
 int iommu_dma_init_fq(struct iommu_domain *domain);
 
-void iommu_dma_free_iova(struct device *dev, dma_addr_t iova, size_t size);
-dma_addr_t iommu_dma_alloc_iova(struct device *dev, size_t size,
-                                u64 dma_limit);
-
 /* The DMA API isn't _quite_ the whole story, though... */
 /*
  * iommu_dma_prepare_msi() - Map the MSI page in the IOMMU device
@@ -82,15 +78,6 @@ static inline int iommu_dma_prepare_msi(struct msi_desc *desc,
 					phys_addr_t msi_addr)
 {
 	return 0;
-}
-
-static dma_addr_t iommu_dma_alloc_iova(struct device *dev, size_t size,
-                                       u64 dma_limit)
-{
-        return 0;
-}
-void iommu_dma_free_iova(struct device *dev, dma_addr_t iova, size_t size)
-{
 }
 
 static inline void iommu_dma_compose_msi_msg(struct msi_desc *desc,

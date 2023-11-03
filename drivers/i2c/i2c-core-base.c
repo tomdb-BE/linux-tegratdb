@@ -713,6 +713,14 @@ static const struct dev_pm_ops i2c_device_pm = {
 	SET_RUNTIME_PM_OPS(i2c_runtime_suspend, i2c_runtime_resume, NULL)
 };
 
+void i2c_shutdown_adapter(struct i2c_adapter *adapter)
+{
+        i2c_lock_bus(adapter, I2C_LOCK_ROOT_ADAPTER);
+        adapter->cancel_xfer_on_shutdown = true;
+        i2c_unlock_bus(adapter, I2C_LOCK_ROOT_ADAPTER);
+}
+EXPORT_SYMBOL_GPL(i2c_shutdown_adapter);
+
 static void i2c_device_shutdown(struct device *dev)
 {
 	struct i2c_client *client = i2c_verify_client(dev);
@@ -963,56 +971,6 @@ static void i2c_dev_set_name(struct i2c_adapter *adap,
 	dev_set_name(&client->dev, "%d-%04x", i2c_adapter_id(adap),
 		     i2c_encode_flags_to_addr(client));
 }
-
-int i2c_set_adapter_bus_clk_rate(struct i2c_adapter *adap, int bus_rate)
-{
-        int ret;
-
-        if (adap->is_bus_clk_rate_supported) {
-                ret = adap->is_bus_clk_rate_supported(adap, bus_rate);
-                if (!ret) {
-                        dev_err(&adap->dev, "clk rate %d not supported\n",
-                                bus_rate);
-                        return -EPERM;
-                }
-        }
-        i2c_lock_adapter(adap);
-        adap->bus_clk_rate = bus_rate;
-        i2c_unlock_adapter(adap);
-
-        return 0;
-}
-EXPORT_SYMBOL_GPL(i2c_set_adapter_bus_clk_rate);
-
-int i2c_get_adapter_bus_clk_rate(struct i2c_adapter *adap)
-{
-        int bus_clk_rate;
-
-        i2c_lock_adapter(adap);
-        bus_clk_rate = adap->bus_clk_rate;
-        i2c_unlock_adapter(adap);
-
-        return bus_clk_rate;
-}
-EXPORT_SYMBOL_GPL(i2c_get_adapter_bus_clk_rate);
-
-void i2c_shutdown_adapter(struct i2c_adapter *adapter)
-{
-        i2c_lock_adapter(adapter);
-        adapter->cancel_xfer_on_shutdown = true;
-        i2c_unlock_adapter(adapter);
-}
-EXPORT_SYMBOL_GPL(i2c_shutdown_adapter);
-
-void i2c_shutdown_clear_adapter(struct i2c_adapter *adapter)
-{
-        i2c_lock_adapter(adapter);
-        adapter->cancel_xfer_on_shutdown = false;
-        adapter->atomic_xfer_only = true;
-        i2c_unlock_adapter(adapter);
-}
-EXPORT_SYMBOL_GPL(i2c_shutdown_clear_adapter);
-
 
 int i2c_dev_irq_from_resources(const struct resource *resources,
 			       unsigned int num_resources)

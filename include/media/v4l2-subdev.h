@@ -213,6 +213,9 @@ struct v4l2_subdev_core_ops {
 			       struct v4l2_event_subscription *sub);
 	int (*unsubscribe_event)(struct v4l2_subdev *sd, struct v4l2_fh *fh,
 				 struct v4l2_event_subscription *sub);
+#ifdef CONFIG_ARCH_TEGRA_210_SOC
+	int (*sync)(struct v4l2_subdev *sd, unsigned int sync_events);
+#endif
 };
 
 /**

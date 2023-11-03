@@ -27,10 +27,6 @@ obj-$(CONFIG_VIDEO_MEM2MEM_DEINTERLACE)	+= m2m-deinterlace.o
 
 obj-$(CONFIG_VIDEO_MUX)			+= video-mux.o
 
-obj-y += tegra/
-
-obj-$(CONFIG_VIDEO_TEGRA_VIVID)         += tegra-vivid/
-
 obj-$(CONFIG_VIDEO_S3C_CAMIF)		+= s3c-camif/
 obj-$(CONFIG_VIDEO_SAMSUNG_EXYNOS4_IS)	+= exynos4-is/
 obj-$(CONFIG_VIDEO_SAMSUNG_S5P_JPEG)	+= s5p-jpeg/
@@ -90,3 +86,7 @@ obj-$(CONFIG_VIDEO_QCOM_VENUS)		+= qcom/venus/
 obj-y					+= sunxi/
 
 obj-$(CONFIG_VIDEO_MESON_GE2D)		+= meson/ge2d/
+
+obj-y += tegra/
+
+obj-$(CONFIG_VIDEO_TEGRA_VIVID)         += tegra-vivid/

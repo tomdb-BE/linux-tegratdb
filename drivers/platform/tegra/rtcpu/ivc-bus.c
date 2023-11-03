@@ -397,7 +397,7 @@ static int tegra_ivc_bus_probe(struct device *dev)
 	return ret;
 }
 
-static int tegra_ivc_bus_remove(struct device *dev)
+static void tegra_ivc_bus_remove(struct device *dev)
 {
 	if (dev->type == &tegra_ivc_channel_type) {
 		struct tegra_ivc_driver *drv = to_tegra_ivc_driver(dev->driver);
@@ -413,7 +413,6 @@ static int tegra_ivc_bus_remove(struct device *dev)
 
 	}
 
-	return 0;
 }
 
 static int tegra_ivc_bus_ready_child(struct device *dev, void *data)

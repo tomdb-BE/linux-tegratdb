@@ -8,20 +8,20 @@ CONFIG_TEGRA_FUSE_UPSTREAM := y
 endif
 
 ifdef CONFIG_TEGRA_GRHOST
-ccflags-y += -I$(srctree.nvidia)/drivers/video/tegra/host
+ccflags-y += -I$(srctree)/drivers/video/tegra/host
 ccflags-y += -DCONFIG_TEGRA_NVDLA_CHANNEL
 endif
 
-ccflags-y += -I$(srctree.nvidia)/include
-ccflags-y += -I$(srctree.nvidia)/include/uapi/linux
-ccflags-y += -I$(srctree.nvidia)/drivers/video/tegra/host/nvdla
+ccflags-y += -I$(srctree)/include
+ccflags-y += -I$(srctree)/include/uapi/linux
+ccflags-y += -I$(srctree)/drivers/video/tegra/host/nvdla
 ccflags-y += -Werror
 
 # When using the upstream host1x driver, the Makefile must define the
 # srctree.host1x path in order to find the necessary header files for
 # the upstream host1x driver.
 ifdef CONFIG_TEGRA_HOST1X_NEXT
-ccflags-y += -I$(srctree.host1x)/include
+ccflags-y += -I$(srctree)/include
 ccflags-y += -DCONFIG_TEGRA_HOST1X
 endif
 

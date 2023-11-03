@@ -15,6 +15,10 @@
 #ifndef __T210_VI_H__
 #define __T210_VI_H__
 
+#define V4L2_SYNC_EVENT_SUBDEV_ERROR_RECOVER	(1 << 2)
+#define V4L2_SYNC_EVENT_FOCUS_POS               (1 << 0)
+#define V4L2_SYNC_EVENT_IRIS_POS                (1 << 1)
+
 extern struct tegra_vi_fops vi2_fops;
 
 #endif

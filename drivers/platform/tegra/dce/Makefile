@@ -5,7 +5,7 @@
 #
 GCOV_PROFILE := y
 
-ccflags-y += -I$(srctree.nvidia)/drivers/platform/tegra/dce/include
+ccflags-y += -I$(srctree)/drivers/platform/tegra/dce/include
 ccflags-y += -Wno-multichar
 ccflags-y += -Werror
 ccflags-y += -Wno-error=cpp
@@ -16,7 +16,7 @@ endif
 # Set config when build as OOT module.
 ifeq ($(CONFIG_TEGRA_OOT_MODULE),m)
 CONFIG_TEGRA_DCE := m
-ccflags-y += -I$(srctree.nvidia)/include
+ccflags-y += -I$(srctree)/include
 endif
 
 obj-$(CONFIG_TEGRA_DCE) += tegra-dce.o

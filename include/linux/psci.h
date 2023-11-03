@@ -32,11 +32,11 @@ struct psci_operations {
 	int (*migrate_info_type)(void);
 };
 
-extern struct psci_operations psci_ops;
-
 struct extended_psci_operations {
         u32 (*make_power_state)(u32 state);
 };
+
+extern struct psci_operations psci_ops;
 extern struct extended_psci_operations extended_ops;
 
 struct psci_0_1_function_ids {

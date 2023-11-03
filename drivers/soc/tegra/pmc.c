@@ -27,7 +27,6 @@
 #include <linux/iopoll.h>
 #include <linux/irqdomain.h>
 #include <linux/irq.h>
-#include <linux/irqchip/tegra.h>
 #include <linux/kernel.h>
 #include <linux/of_address.h>
 #include <linux/of_clk.h>
@@ -109,7 +108,6 @@
 #define PMC_USB_AO			0xf0
 
 #define PMC_SCRATCH41			0x140
-#define PMC_SCRATCH43			0x22c
 
 #define PMC_WAKE2_MASK			0x160
 #define PMC_WAKE2_LEVEL			0x164
@@ -507,16 +505,6 @@ static void tegra_pmc_scratch_writel(struct tegra_pmc *pmc, u32 value,
 		writel(value, pmc->scratch + offset);
 }
 
-#ifdef CONFIG_PM_SLEEP
-int tegra_read_wake_status(u32 *wake_status)
-{
-        if (soc_is_tegra186_n_later())
-                return tegra18x_read_wake_status(wake_status);
-
-        return 0;
-}
-#endif
-
 /*
  * TODO Figure out a way to call this with the struct tegra_pmc * passed in.
  * This currently doesn't work because readx_poll_timeout() can only operate
@@ -794,7 +782,7 @@ static int tegra_powergate_power_up(struct tegra_powergate *pg,
 
 	err = reset_control_deassert(pg->reset);
 	if (err)
-		goto disable_clks;
+		goto powergate_off;
 
 	usleep_range(10, 20);
 
@@ -1767,14 +1755,6 @@ int tegra_io_rail_power_off(unsigned int id)
 	return tegra_io_pad_power_disable(id);
 }
 EXPORT_SYMBOL(tegra_io_rail_power_off);
-
-int tegra_pmc_save_se_context_buffer_address(u32 add)
-{
-        tegra_pmc_writel(pmc, add, PMC_SCRATCH43);
-
-        return 0;
-}
-EXPORT_SYMBOL(tegra_pmc_save_se_context_buffer_address);
 
 #ifdef CONFIG_PM_SLEEP
 enum tegra_suspend_mode tegra_pmc_get_suspend_mode(void)

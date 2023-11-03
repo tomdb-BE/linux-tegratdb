@@ -5,7 +5,7 @@
 # Copyright (c) 2022, NVIDIA CORPORATION.  All rights reserved.
 #
 
-ccflags-y += -I$(srctree.nvidia)/include
+ccflags-y += -I$(srctree)/include
 ccflags-y += -Werror
 
 # Set config when build as OOT module.

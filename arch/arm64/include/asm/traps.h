@@ -8,8 +8,11 @@
 #define __ASM_TRAP_H
 
 #include <linux/list.h>
+#include <linux/irqflags.h>
+#include <linux/preempt.h>
 #include <asm/esr.h>
 #include <asm/sections.h>
+#include <asm/cpufeature.h>
 
 struct pt_regs;
 
@@ -29,6 +32,23 @@ void arm64_notify_segfault(unsigned long addr);
 void arm64_force_sig_fault(int signo, int code, unsigned long far, const char *str);
 void arm64_force_sig_mceerr(int code, unsigned long far, short lsb, const char *str);
 void arm64_force_sig_ptrace_errno_trap(int errno, unsigned long far, const char *str);
+
+#ifdef CONFIG_TEGRA_A57_SERR
+struct serr_hook {
+        struct list_head node;
+        void *priv;
+        /* returns 0, if the MCA error needs reboot.
+         * returns 1, if the MCA error doesn't need reboot or
+         *            no MCA Error is detected.
+         */
+        int (*fn)(struct pt_regs *regs, int reason,
+                unsigned int esr, void *priv);
+};
+
+void register_serr_hook(struct serr_hook *hook);
+void unregister_serr_hook(struct serr_hook *hook);
+#endif
+
 
 /*
  * Move regs->pc to next instruction and do necessary setup before it

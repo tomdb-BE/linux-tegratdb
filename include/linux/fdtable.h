@@ -124,8 +124,6 @@ int iterate_fd(struct files_struct *, unsigned,
 		const void *);
 
 extern int close_fd(unsigned int fd);
-extern int __alloc_fd(struct files_struct *files,
-                      unsigned start, unsigned end, unsigned flags);
 extern int __close_range(unsigned int fd, unsigned int max_fd, unsigned int flags);
 extern int close_fd_get_file(unsigned int fd, struct file **res);
 extern int unshare_fd(unsigned long unshare_flags, unsigned int max_fds,

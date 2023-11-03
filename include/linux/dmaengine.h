@@ -731,7 +731,6 @@ struct dma_tx_state {
 	dma_cookie_t used;
 	u32 residue;
 	u32 in_flight_bytes;
-	u64 total_bytes_transferred;
 };
 
 /**
@@ -1533,8 +1532,6 @@ static inline int dma_get_slave_caps(struct dma_chan *chan,
 	return -ENXIO;
 }
 #endif
-
-#define dma_request_slave_channel_reason(dev, name) dma_request_chan(dev, name)
 
 static inline int dmaengine_desc_set_reuse(struct dma_async_tx_descriptor *tx)
 {

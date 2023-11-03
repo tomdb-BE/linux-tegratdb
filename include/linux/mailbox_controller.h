@@ -50,6 +50,7 @@ struct mbox_chan_ops {
 	void (*shutdown)(struct mbox_chan *chan);
 	bool (*last_tx_done)(struct mbox_chan *chan);
 	bool (*peek_data)(struct mbox_chan *chan);
+	int (*get_max_txsize)(struct mbox_chan *chan);
 };
 
 /**

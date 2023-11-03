@@ -27,12 +27,13 @@
 #include <soc/tegra/fuse.h>
 #endif
 #include <trace/events/nvmap.h>
-
 #ifndef NVMAP_LOADABLE_MODULE
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 4, 0)
 #include <linux/dma-map-ops.h>
 #endif
 #endif /* !NVMAP_LOADABLE_MODULE */
+
+#include <asm-generic/dma-coherent.h>
 
 #include "nvmap_priv.h"
 
