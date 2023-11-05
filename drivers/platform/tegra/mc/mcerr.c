@@ -38,7 +38,7 @@
 #include <linux/platform/tegra/mc-regs-t18x.h>
 #include <linux/platform/tegra/mc-regs-t19x.h>
 
-extern struct of_device_id __mcerr_of_table;
+static struct of_device_id __mcerr_of_table;
 
 static bool mcerr_throttle_enabled = true;
 u32  mcerr_silenced;

@@ -18,6 +18,8 @@ struct gic_quirk {
 	u32 mask;
 };
 
+void gic_set_kvm_info(const struct gic_kvm_info *info);
+
 int gic_configure_irq(unsigned int irq, unsigned int type,
                        void __iomem *base, void (*sync_access)(void));
 void gic_dist_config(void __iomem *base, int gic_irqs,
