@@ -51,6 +51,7 @@ struct media_device_info {
 #define MEDIA_ENT_F_BASE			0x00000000
 #define MEDIA_ENT_F_OLD_BASE			0x00010000
 #define MEDIA_ENT_F_OLD_SUBDEV_BASE		0x00020000
+#define MEDIA_ENT_F_CAM_HW             		(MEDIA_ENT_F_OLD_SUBDEV_BASE + 10)
 
 /*
  * Initial value to be used when a new entity is created

@@ -265,6 +265,7 @@ static void submit_work(struct nvhost_job *job)
 	struct nvhost_device_data *pdata = platform_get_drvdata(job->ch->dev);
 	void *cpuva = NULL;
 	int i;
+	int ret;
 
 	/* First, move us into host class */
 	u32 cur_class = NV_HOST1X_CLASS_ID;
@@ -334,14 +335,14 @@ static void submit_work(struct nvhost_job *job)
 		op2 = job->gathers[i].mem_base + g->offset;
 
 		if (nvhost_debug_trace_cmdbuf)
-			cpuva = dma_buf_vmap(g->buf);
+			ret = dma_buf_vmap(g->buf, cpuva);
 
 		nvhost_cdma_push_gather(&job->ch->cdma,
 				cpuva,
 				job->gathers[i].mem_base,
 				g->offset,
 				op1, op2);
-		if (cpuva)
+		if (ret)
 			dma_buf_vunmap(g->buf, cpuva);
 	}
 

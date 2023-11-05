@@ -31,6 +31,7 @@
 #include <linux/nospec.h>
 #if LINUX_VERSION_CODE > KERNEL_VERSION(4, 15, 0)
 #include <linux/compat.h>
+#include <linux/arm64-barrier.h>
 #endif
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 14, 0)
 #include <linux/types.h>

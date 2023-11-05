@@ -481,7 +481,6 @@ int tsec_hdcp_srm_read(struct hdcp_context_t *hdcp_context,
 {
 	struct file *fp = NULL;
 	unsigned int size = 0;
-	mm_segment_t seg;
 
 	if (!hdcp_context) {
 		hdcp_err("tsec_hdcp_srm_read: null params sent!");
@@ -504,12 +503,9 @@ int tsec_hdcp_srm_read(struct hdcp_context_t *hdcp_context,
 		hdcp_err("Opening SRM file failed!\n");
 		return -ENOENT;
 	}
-	seg = get_fs();
-	set_fs(KERNEL_DS);
 	/* copy SRM to buffer */
 	vfs_read(fp, (u8 *)hdcp_context->cpuvaddr_srm,
 		HDCP_SRM_SIZE, &fp->f_pos);
-	set_fs(seg);
 	size = fp->f_pos;
 	filp_close(fp, NULL);
 	return size;

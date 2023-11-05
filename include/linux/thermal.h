@@ -17,6 +17,7 @@
 #include <linux/workqueue.h>
 #include <uapi/linux/thermal.h>
 
+#define THERMAL_TRIPS_NONE	-1
 #define THERMAL_MAX_TRIPS	12
 
 /* invalid cooling state */
@@ -193,6 +194,7 @@ struct thermal_governor {
 	int (*bind_to_tz)(struct thermal_zone_device *tz);
 	void (*unbind_from_tz)(struct thermal_zone_device *tz);
 	int (*throttle)(struct thermal_zone_device *tz, int trip);
+	int (*of_parse)(struct thermal_zone_params *tp, struct device_node *np);
 	struct list_head	governor_list;
 };
 
@@ -234,6 +236,7 @@ struct thermal_bind_params {
 /* Structure to define Thermal Zone parameters */
 struct thermal_zone_params {
 	char governor_name[THERMAL_NAME_LENGTH];
+	void *governor_params;
 
 	/*
 	 * a boolean to indicate if the thermal to hwmon sysfs interface

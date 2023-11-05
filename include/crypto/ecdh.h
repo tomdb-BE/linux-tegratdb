@@ -34,6 +34,7 @@
  * @key_size:	Size of the private ECDH key
  */
 struct ecdh {
+	unsigned short curve_id;
 	char *key;
 	unsigned short key_size;
 };

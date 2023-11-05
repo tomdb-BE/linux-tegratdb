@@ -134,14 +134,14 @@ static struct v4l2_subdev_core_ops v4l2sd_core_ops = {
 };
 
 static int v4l2sd_get_fmt(struct v4l2_subdev *sd,
-		struct v4l2_subdev_pad_config *cfg,
+		struct v4l2_subdev_state *state,
 		struct v4l2_subdev_format *format)
 {
 	return camera_common_g_fmt(sd, &format->format);
 }
 
 static int v4l2sd_set_fmt(struct v4l2_subdev *sd,
-		struct v4l2_subdev_pad_config *cfg,
+		struct v4l2_subdev_state *state,
 	struct v4l2_subdev_format *format)
 {
 	struct i2c_client *client = v4l2_get_subdevdata(sd);

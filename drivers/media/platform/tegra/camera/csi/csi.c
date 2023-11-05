@@ -484,7 +484,7 @@ static struct v4l2_frmsize_discrete tegra_csi_tpg_sizes[] = {
 };
 
 static int tegra_csi_enum_framesizes(struct v4l2_subdev *sd,
-		struct v4l2_subdev_pad_config *cfg,
+		struct v4l2_subdev_state *state,
 		struct v4l2_subdev_frame_size_enum *fse)
 {
 	int i;
@@ -533,7 +533,7 @@ static int tegra_csi_get_fmtindex(struct tegra_csi_channel *chan,
 }
 
 static int tegra_csi_enum_frameintervals(struct v4l2_subdev *sd,
-		struct v4l2_subdev_pad_config *cfg,
+		struct v4l2_subdev_state *state,
 		struct v4l2_subdev_frame_interval_enum *fie)
 {
 	int index;
@@ -631,7 +631,7 @@ static int tegra_csi_g_input_status(struct v4l2_subdev *sd, u32 *status)
  */
 
 static int tegra_csi_get_format(struct v4l2_subdev *subdev,
-			   struct v4l2_subdev_pad_config *cfg,
+			   struct v4l2_subdev_state *state,
 			   struct v4l2_subdev_format *fmt)
 {
 	struct tegra_csi_channel *chan = to_csi_chan(subdev);
@@ -648,7 +648,7 @@ static int tegra_csi_get_format(struct v4l2_subdev *subdev,
 }
 
 static int tegra_csi_set_format(struct v4l2_subdev *subdev,
-			   struct v4l2_subdev_pad_config *cfg,
+			   struct v4l2_subdev_state *state,
 			   struct v4l2_subdev_format *fmt)
 {
 	int ret;
@@ -709,7 +709,7 @@ static int tegra_csi_g_frame_interval(struct v4l2_subdev *sd,
 }
 
 static int tegra_csi_enum_mbus_code(struct v4l2_subdev *sd,
-				struct v4l2_subdev_pad_config *cfg,
+				struct v4l2_subdev_state *state,
 				struct v4l2_subdev_mbus_code_enum *code)
 {
 	if (code->index >= ARRAY_SIZE(tegra_csi_tpg_fmts))

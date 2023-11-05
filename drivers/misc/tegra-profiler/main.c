@@ -922,7 +922,9 @@ out_err_uncore_pmu_scf:
 	quadd_tegra23x_pmu_scf_deinit();
 #endif /* CONFIG_ARCH_TEGRA_23x_SOC || CONFIG_ARCH_TEGRA_234_SOC */
 
+#if defined(CONFIG_ARCH_TEGRA_23x_SOC) || defined(CONFIG_ARCH_TEGRA_234_SOC)
 out_err_pmu:
+#endif
 	pmu_deinit();
 
 	return err;

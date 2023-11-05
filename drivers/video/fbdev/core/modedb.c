@@ -911,6 +911,25 @@ void fb_videomode_to_var(struct fb_var_screeninfo *var,
 }
 
 /**
+ * fb_mode_find_cea - finds a cea mode
+ *
+ * RETURNS:
+ * cea vic code, 0 if not a cea mode
+ */
+int fb_mode_find_cea(struct fb_videomode *mode)
+{
+        int i;
+
+        /* TODO: optimize search, for now start from top */
+        for (i = CEA_MODEDB_SIZE - 1; i > 0; i--)
+                if (fb_mode_is_equal_tolerance(cea_modes + i, mode,
+                                        FB_MODE_TOLERANCE_DEFAULT))
+                        return i;
+
+        return 0;
+}
+
+/**
  * fb_mode_is_equal - compare 2 videomodes
  * @mode1: first videomode
  * @mode2: second videomode
@@ -933,6 +952,46 @@ int fb_mode_is_equal(const struct fb_videomode *mode1,
 		mode1->sync         == mode2->sync &&
 		mode1->vmode        == mode2->vmode);
 }
+
+/**
+ * fb_mode_is_equal_tolerance - compare 2 videomodes with a tolerance in
+ * pixclock. Similar to fb_mode_is_equal
+ *
+ * RETURNS:
+ * 1 if equal, 0 if not
+ */
+int fb_mode_is_equal_tolerance(const struct fb_videomode *mode1,
+                               const struct fb_videomode *mode2,
+                               unsigned int tolerance)
+{
+        /*
+         * Note: this function intentionally doesn't check refresh and flags.
+         * refresh is an optional field and always has +1/-1 rounding errors
+         */
+
+        if (mode1->xres             == mode2->xres &&
+                mode1->yres         == mode2->yres &&
+                mode2->pixclock *
+                                (FB_MODE_TOLERANCE_DENOMINATOR-tolerance)
+                                / FB_MODE_TOLERANCE_DENOMINATOR
+                        <= mode1->pixclock &&
+                mode1->pixclock <=
+                        mode2->pixclock *
+                                (FB_MODE_TOLERANCE_DENOMINATOR+tolerance)
+                                / FB_MODE_TOLERANCE_DENOMINATOR &&
+                mode1->hsync_len    == mode2->hsync_len &&
+                mode1->vsync_len    == mode2->vsync_len &&
+                mode1->left_margin  == mode2->left_margin &&
+                mode1->right_margin == mode2->right_margin &&
+                mode1->upper_margin == mode2->upper_margin &&
+                mode1->lower_margin == mode2->lower_margin &&
+                mode1->sync         == mode2->sync &&
+                mode1->vmode        == mode2->vmode)
+                return 1;
+        else
+                return 0;
+}
+
 
 /**
  * fb_find_best_mode - find best matching videomode
@@ -1203,6 +1262,7 @@ EXPORT_SYMBOL(fb_find_best_display);
 EXPORT_SYMBOL(fb_videomode_to_var);
 EXPORT_SYMBOL(fb_var_to_videomode);
 EXPORT_SYMBOL(fb_mode_is_equal);
+EXPORT_SYMBOL(fb_mode_find_cea);
 EXPORT_SYMBOL(fb_add_videomode);
 EXPORT_SYMBOL(fb_match_mode);
 EXPORT_SYMBOL(fb_find_best_mode);
@@ -1210,3 +1270,4 @@ EXPORT_SYMBOL(fb_find_nearest_mode);
 EXPORT_SYMBOL(fb_videomode_to_modelist);
 EXPORT_SYMBOL(fb_find_mode);
 EXPORT_SYMBOL(fb_find_mode_cvt);
+

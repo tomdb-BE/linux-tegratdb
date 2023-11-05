@@ -125,7 +125,6 @@ static int devfreq_watermark_target_freq(struct devfreq *df,
 static void devfreq_watermark_debug_start(struct devfreq *df)
 {
 	struct wmark_gov_info *wmarkinfo = df->data;
-	struct dentry *f;
 	char dirname[128];
 
 	snprintf(dirname, sizeof(dirname), "%s_scaling",
@@ -142,12 +141,8 @@ static void devfreq_watermark_debug_start(struct devfreq *df)
 
 #define CREATE_DBG_FILE(fname) \
 	do {\
-		f = debugfs_create_u32(#fname, S_IRUGO | S_IWUSR, \
+		debugfs_create_u32(#fname, S_IRUGO | S_IWUSR, \
 			wmarkinfo->debugdir, &wmarkinfo->p_##fname); \
-		if (NULL == f) { \
-			pr_warn("cannot create debug entry " #fname "\n"); \
-			return; \
-		} \
 	} while (0)
 
 	CREATE_DBG_FILE(low_wmark);

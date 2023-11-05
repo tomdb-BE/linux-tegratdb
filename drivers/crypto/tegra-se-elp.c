@@ -42,9 +42,6 @@
 
 #include "tegra-se-elp.h"
 
-#include "../../crypto/ecc.h"
-#include "../../crypto/ecc_curve_defs.h"
-
 #define DRIVER_NAME	"tegra-se-elp"
 
 #define NR_RES	2
@@ -58,7 +55,6 @@
 #define RAND_256			32	/*bytes*/
 #define ADV_STATE_FREQ			3
 #define ECC_MIN_BYTES	20
-#define ECC_MAX_BYTES	68
 #define ECC_MAX_WORDS	20
 #define WORD_SIZE_BYTES	4
 #define MAX_PKA1_SIZE	TEGRA_SE_PKA1_RSA4096_INPUT_SIZE

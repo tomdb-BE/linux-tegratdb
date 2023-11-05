@@ -18,6 +18,7 @@
 #include <linux/module.h>
 #include <linux/slab.h>
 #include <linux/platform_device.h>
+#include <linux/mod_devicetable.h>
 #include <linux/reboot.h>
 #include <linux/mfd/tmpm32xi2c.h>
 #ifdef CONFIG_TEGRA_HV_PM_CTL

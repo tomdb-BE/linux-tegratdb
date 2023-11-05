@@ -51,6 +51,8 @@
 #define FBMON_FIX_INPUT   2
 #define FBMON_FIX_TIMINGS 3
 
+#define FBMON_MAX_SVD_SIZE 256
+
 #ifdef CONFIG_FB_MODE_HELPERS
 struct broken_edid {
 	u8  manufacturer[4];
@@ -998,6 +1000,270 @@ void fb_edid_to_monspecs(unsigned char *edid, struct fb_monspecs *specs)
 		specs->misc &= ~FB_MISC_1ST_DETAIL;
 
 	DPRINTK("========================================\n");
+}
+
+#define SUPPORTS_AI             (1 << 7)
+#define DC_48BIT                (1 << 6)
+#define DC_36BIT                (1 << 5)
+#define DC_30BIT                (1 << 4)
+#define DC_Y444                 (1 << 3)
+#define DVI_DUAL                (1 << 0)
+
+#define LATENCY_PRESENT         (1 << 7)
+#define I_LATENCY_PRESENT       (1 << 6)
+#define HDMI_VIDEO_PRESENT      (1 << 5)
+
+#define HDMI_3D_PRESENT         (1 << 7)
+#define HDMI_3D_MULTI_PRESENT   (0x3 << 5)
+#define IMAGE_SIZE              (0x3 << 3)
+
+#define HDMI_VIC_LEN_MASK       (0x7)
+#define HDMI_3D_LEN_MASK        (0x1F)
+
+#define MAX_HDMI_VIC_LEN        HDMI_VIC_LEN_MASK
+#define MAX_HDMI_3D_LEN         HDMI_3D_LEN_MASK
+
+struct hdmi_vendor_block {
+        u16 source_physical_address;
+        u8 max_tmds_clock;
+        u8 video_latency;
+        u8 audio_latency;
+        u8 i_video_latency;
+        u8 i_audio_latency;
+        u8 hdmi_vic_len;
+        u8 hdmi_3d_len;
+        u8 hdmi_vic[MAX_HDMI_VIC_LEN];
+        u16 hdmi_3d_structure_all;
+        u16 hdmi_3d_mask;
+        u8 hdmi_2d_vic_order[MAX_HDMI_3D_LEN];
+        u8 hdmi_3d_structure[MAX_HDMI_3D_LEN];
+        u8 hdmi_2d_detail[MAX_HDMI_3D_LEN];
+};
+
+static void fb_hvd_parse_ext(unsigned char *edid, struct hdmi_vendor_block *hvd,
+        u8 start, u8 len)
+{
+        char mask;
+        int i;
+
+        if (len <= 0)
+                return;
+
+        /* TODO
+         * Parse Deep Color bits and DVI_Dual
+         */
+        start++;
+        len--;
+
+        if (len > 0) {
+                hvd->max_tmds_clock = edid[start++];
+                len--;
+        }
+
+        if (len > 0) {
+
+                mask = edid[start++];
+                len--;
+
+                if ((mask & LATENCY_PRESENT) && (len >= 2)) {
+                        hvd->video_latency = edid[start++];
+                        hvd->audio_latency = edid[start++];
+                        len -= 2;
+                }
+
+                if ((mask & I_LATENCY_PRESENT) && (len >= 2)) {
+                        hvd->i_video_latency = edid[start++];
+                        hvd->i_audio_latency = edid[start++];
+                        len -= 2;
+                }
+
+                if ((mask & HDMI_VIDEO_PRESENT) && (len >= 2)) {
+                        /* TODO
+                         * Parse 3D masks and structures
+                         */
+                        start++;
+                        len--;
+
+                        hvd->hdmi_vic_len = (edid[start] >> 5) &
+                                HDMI_VIC_LEN_MASK;
+                        hvd->hdmi_3d_len = edid[start] & HDMI_3D_LEN_MASK;
+                        start++;
+                        len--;
+                        for (i = 0; i < hvd->hdmi_vic_len && len > 0; i++) {
+                                hvd->hdmi_vic[i] = edid[start++];
+                                len--;
+                        }
+                }
+        }
+}
+
+
+void fb_edid_add_monspecs(unsigned char *edid, struct fb_monspecs *specs)
+{
+        unsigned char *block;
+        struct fb_videomode *m;
+        struct hdmi_vendor_block hvd = {0};
+        int num = 0, i, j, hdmi_num = 0;
+        u8 svd[FBMON_MAX_SVD_SIZE] = {0}, y420_svd[31] = {0}, y420_support_bitmap[31] = {0};
+        u8 edt[(128 - 4) / DETAILED_TIMING_DESCRIPTION_SIZE] = {0};
+        u8 pos = 4, svd_n = 0, y420_svd_n = 0, y420_support_bitmap_n = 0;
+        bool y420_support_full = false;
+
+        if (!edid)
+                return;
+
+        if (!edid_checksum(edid))
+                return;
+
+        if (edid[0] != 0x2 ||
+            edid[2] < 4 || edid[2] > 128)
+                return;
+
+        DPRINTK("  Short Video Descriptors\n");
+
+        while (pos < edid[2]) {
+                u8 len = edid[pos] & 0x1f, type = (edid[pos] >> 5) & 7;
+                pr_debug("Data block %u of %u bytes\n", type, len);
+
+                pos++;
+                if (type == CEA_DATA_BLOCK_VIDEO) {
+                        for (i = pos; i < pos + len; i++) {
+                                u8 idx = edid[i] & 0x7f;
+                                svd[svd_n++] = idx;
+                                pr_debug("N%sative mode #%d\n",
+                                         edid[i] & 0x80 ? "" : "on-n", idx);
+                        }
+                } else if (type == CEA_DATA_BLOCK_VENDOR && len >= 3) {
+                        /* Check Vendor Specific Data Block.  For HDMI,
+                           it is always 00-0C-03 for HDMI Licensing, LLC. */
+                        if (edid[pos] == 3 && edid[pos + 1] == 0xc &&
+                                edid[pos + 2] == 0 && len >= 5) {
+                                specs->misc |= FB_MISC_HDMI;
+                                hvd.source_physical_address =
+                                        (edid[pos + 4] << 8) | edid[pos + 3];
+                                fb_hvd_parse_ext(edid, &hvd, pos + 5, len - 5);
+                                hdmi_num = hvd.hdmi_vic_len;
+                        }
+
+                        /* OUI for hdmi forum: C4-5D-D8 */
+                        if (edid[pos] == 0xd8 && edid[pos + 1] == 0x5d &&
+                            edid[pos + 2] == 0xc4)
+                                specs->misc |= FB_MISC_HDMI_FORUM;
+
+                } else if (type == CEA_DATA_BLOCK_EXT) {
+                        u32 ext_type = edid[pos];
+
+                        if (ext_type == CEA_DATA_BLOCK_EXT_Y420VDB) {
+                                specs->misc |= FB_MISC_HDMI_FORUM;
+                                for (i = pos + 1; i < pos + len; i++)
+                                        y420_svd[y420_svd_n++] =
+                                                        edid[i] & 0x7f;
+                        } else if (ext_type == CEA_DATA_BLOCK_EXT_Y420CMDB) {
+                                specs->misc |= FB_MISC_HDMI_FORUM;
+                                if (len == 1)
+                                        y420_support_full = true;
+                                else {
+                                        for (i = pos + 1; i < pos + len; i++)
+                                                y420_support_bitmap[
+                                                y420_support_bitmap_n++] =
+                                                edid[i];
+                                }
+                        }
+               }
+                pos += len;
+        }
+
+        block = edid + edid[2];
+
+        DPRINTK("  Extended Detailed Timings\n");
+
+        for (i = 0; i < (128 - edid[2]) / DETAILED_TIMING_DESCRIPTION_SIZE;
+             i++, block += DETAILED_TIMING_DESCRIPTION_SIZE)
+                if (PIXEL_CLOCK != 0)
+                        edt[num++] = block - edid;
+
+        /* Yikes, EDID data is totally useless */
+        if (!(num + svd_n + y420_svd_n))
+                return;
+
+        m = kcalloc(specs->modedb_len + num + svd_n + hdmi_num + y420_svd_n,
+                    sizeof(struct fb_videomode),
+                    GFP_KERNEL);
+
+        if (!m)
+                return;
+
+        memcpy(m, specs->modedb, specs->modedb_len * sizeof(struct fb_videomode));
+
+        for (i = specs->modedb_len; i < specs->modedb_len + num; i++) {
+                get_detailed_timing(edid + edt[i - specs->modedb_len], &m[i]);
+                if (i == specs->modedb_len)
+                        m[i].flag |= FB_MODE_IS_FIRST;
+                pr_debug("Adding %ux%u@%u\n", m[i].xres, m[i].yres, m[i].refresh);
+        }
+
+        for (i = specs->modedb_len + num; i < specs->modedb_len + num + svd_n; i++) {
+                int idx = svd[i - specs->modedb_len - num];
+                int row, col;
+                if (!idx || idx >= CEA_MODEDB_SIZE) {
+                        pr_warn("Reserved SVD code %d\n", idx);
+                } else if (!cea_modes[idx].xres) {
+                        pr_warn("Unimplemented SVD code %d\n", idx);
+                } else {
+                        memcpy(&m[i], cea_modes + idx, sizeof(m[i]));
+                        m[i].vmode |= FB_VMODE_IS_CEA;
+                        if (y420_support_full)
+                                m[i].vmode |= FB_VMODE_Y420;
+                        else {
+                                row = (i - specs->modedb_len - num) / 8;
+                                col = (i - specs->modedb_len - num) % 8;
+                                if ((row < y420_support_bitmap_n) &&
+                                        (y420_support_bitmap[row] >> col & 0x1))
+                                        m[i].vmode |= FB_VMODE_Y420;
+                        }
+                        pr_debug("Adding SVD #%d: %ux%u@%u\n", idx,
+                                 m[i].xres, m[i].yres, m[i].refresh);
+                }
+        }
+
+       for (j = 0; j < hdmi_num; j++) {
+                unsigned vic = hvd.hdmi_vic[j];
+
+                if (vic >= HDMI_EXT_MODEDB_SIZE) {
+                        pr_warn("Unsupported HDMI VIC %d, ignoring\n", vic);
+                        continue;
+                }
+
+                memcpy(&m[i], &hdmi_ext_modes[vic], sizeof(m[i]));
+                m[i].vmode |= fb_mode_find_cea(&m[i]) ?
+                        FB_VMODE_IS_CEA : 0;
+                m[i].vmode |= FB_VMODE_IS_HDMI_EXT;
+                pr_debug("Adding HDMI VIC #%d: %ux%u@%u\n", vic,
+                                m[i].xres, m[i].yres, m[i].refresh);
+                i++;
+        }
+
+        for (i = specs->modedb_len + num + svd_n + hdmi_num;
+                i < specs->modedb_len + num + svd_n + hdmi_num + y420_svd_n;
+                i++) {
+                int idx =
+                y420_svd[i - specs->modedb_len - num - svd_n - hdmi_num];
+
+                if (!idx || idx > (CEA_MODEDB_SIZE - 1)) {
+                        pr_warn("Reserved SVD code %d\n", idx);
+                } else {
+                        memcpy(&m[i], cea_modes + idx, sizeof(m[i]));
+                        m[i].vmode |= FB_VMODE_IS_CEA;
+                        m[i].vmode |= FB_VMODE_Y420_ONLY;
+                        pr_debug("Adding SVD #%d: %ux%u@%u\n", idx,
+                                 m[i].xres, m[i].yres, m[i].refresh);
+                }
+        }
+
+        kfree(specs->modedb);
+        specs->modedb = m;
+        specs->modedb_len = specs->modedb_len +
+                                num + svd_n + hdmi_num + y420_svd_n;
 }
 
 /*

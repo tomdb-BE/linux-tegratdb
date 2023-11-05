@@ -33,6 +33,7 @@
 
 #include <asm/barrier.h>
 #include <linux/nospec.h>
+#include <linux/arm64-barrier.h>
 
 #define has_s_op(master, op) \
 	(master->ops && master->ops->op)
@@ -535,7 +536,7 @@ break_loops:
 }
 
 int camera_common_enum_mbus_code(struct v4l2_subdev *sd,
-				struct v4l2_subdev_pad_config *cfg,
+				struct v4l2_subdev_state *state,
 				struct v4l2_subdev_mbus_code_enum *code)
 {
 	struct camera_common_data *s_data = to_camera_common_data(sd->dev);
@@ -784,7 +785,7 @@ static int camera_common_evaluate_color_format(struct v4l2_subdev *sd,
 }
 
 int camera_common_enum_framesizes(struct v4l2_subdev *sd,
-		struct v4l2_subdev_pad_config *cfg,
+		struct v4l2_subdev_state *state,
 		struct v4l2_subdev_frame_size_enum *fse)
 {
 	struct camera_common_data *s_data = to_camera_common_data(sd->dev);
@@ -810,7 +811,7 @@ int camera_common_enum_framesizes(struct v4l2_subdev *sd,
 EXPORT_SYMBOL_GPL(camera_common_enum_framesizes);
 
 int camera_common_enum_frameintervals(struct v4l2_subdev *sd,
-		struct v4l2_subdev_pad_config *cfg,
+		struct v4l2_subdev_state *state,
 		struct v4l2_subdev_frame_interval_enum *fie)
 {
 	struct camera_common_data *s_data = to_camera_common_data(sd->dev);

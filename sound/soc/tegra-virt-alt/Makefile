@@ -1,10 +1,10 @@
 GCOV_PROFILE := y
 
 subdir-ccflags-y := -Werror
-ccflags-y += -I$(overlay)/$(src)/../tegra-alt
-ccflags-y += -I$(overlay)/$(src)/../tegra-alt/include/
-ccflags-y += -I$(overlay)/$(src)/../tegra-alt/machine_drivers/
-ccflags-y += -I$(overlay)/$(src)/../codecs
+ccflags-y += -I$(srctree)/tegra-alt
+ccflags-y += -I$(srctree)/tegra-alt/include/
+ccflags-y += -I$(srctree)/tegra-alt/machine_drivers/
+ccflags-y += -I$(srctree)/codecs
 
 # Tegra platform Support
 snd-soc-tegra-virt-alt-ivc-objs := tegra_virt_alt_ivc.o

@@ -45,6 +45,14 @@
 #define NVMAP_DMABUF_ATTACH  __nvmap_dmabuf_attach
 #endif
 
+#ifndef DMABUF_CAN_DEFER_UNMAP
+#define DMABUF_CAN_DEFER_UNMAP             BIT(0)
+#endif
+
+#ifndef DMABUF_SKIP_CACHE_SYNC
+#define DMABUF_SKIP_CACHE_SYNC             BIT(1)
+#endif
+
 static int __nvmap_dmabuf_attach(struct dma_buf *dmabuf, struct device *dev,
 			       struct dma_buf_attachment *attach)
 {

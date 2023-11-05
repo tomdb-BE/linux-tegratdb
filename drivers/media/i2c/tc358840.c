@@ -552,7 +552,7 @@ static void print_avi_infoframe(struct v4l2_subdev *sd)
 
 	i2c_rd(sd, PK_AVI_0HEAD, buffer, HDMI_INFOFRAME_SIZE(AVI));
 
-	if (hdmi_infoframe_unpack(&frame, buffer) < 0) {
+	if (hdmi_infoframe_unpack(&frame, buffer, sizeof(buffer)) < 0) {
 		v4l2_err(sd, "%s: unpack of AVI infoframe failed\n", __func__);
 		return;
 	}
@@ -1453,7 +1453,7 @@ static irqreturn_t tc358840_irq_handler(int irq, void *dev_id)
 /* --------------- PAD OPS --------------- */
 
 static int tc358840_get_fmt(struct v4l2_subdev *sd,
-		struct v4l2_subdev_pad_config *cfg,
+		struct v4l2_subdev_state *istate,
 		struct v4l2_subdev_format *format)
 {
 	struct tc358840_state *state = to_state(sd);
@@ -1497,12 +1497,12 @@ static int tc358840_get_fmt(struct v4l2_subdev *sd,
 }
 
 static int tc358840_set_fmt(struct v4l2_subdev *sd,
-		struct v4l2_subdev_pad_config *cfg,
+		struct v4l2_subdev_state *istate,
 		struct v4l2_subdev_format *format)
 {
 	struct tc358840_state *state = to_state(sd);
 	u32 code = format->format.code; /* is overwritten by get_fmt */
-	int ret = tc358840_get_fmt(sd, cfg, format);
+	int ret = tc358840_get_fmt(sd, istate, format);
 
 	v4l2_dbg(3, debug, sd, "%s():\n", __func__);
 
@@ -1734,11 +1734,12 @@ static int tc358840_dv_timings_cap(struct v4l2_subdev *sd,
 }
 
 static int tc358840_g_mbus_config(struct v4l2_subdev *sd,
+				unsigned int pad,
 				  struct v4l2_mbus_config *cfg)
 {
 	v4l2_dbg(3, debug, sd, "%s():\n", __func__);
 
-	cfg->type = V4L2_MBUS_CSI2;
+	cfg->type = V4L2_MBUS_CSI1;
 
 	/* Support for non-continuous CSI-2 clock is missing in the driver */
 	cfg->flags = V4L2_MBUS_CSI2_CONTINUOUS_CLOCK | V4L2_MBUS_CSI2_CHANNEL_0;
@@ -1908,7 +1909,7 @@ static int tc358840_s_stream(struct v4l2_subdev *sd, int enable)
 }
 
 static int tc358840_enum_mbus_code(struct v4l2_subdev *sd,
-				struct v4l2_subdev_pad_config *cfg,
+				struct v4l2_subdev_state *state,
 				struct v4l2_subdev_mbus_code_enum *code)
 {
 	v4l2_dbg(2, debug, sd, "%s()\n", __func__);
@@ -1928,7 +1929,7 @@ static int tc358840_enum_mbus_code(struct v4l2_subdev *sd,
 }
 
 static int tc358840_enum_framesizes(struct v4l2_subdev *sd,
-				struct v4l2_subdev_pad_config *cfg,
+				struct v4l2_subdev_state *state,
 				struct v4l2_subdev_frame_size_enum *fse)
 {
 	const struct camera_common_frmfmt *frmfmt = tc358840_frmfmt;
@@ -1951,7 +1952,7 @@ static int tc358840_enum_framesizes(struct v4l2_subdev *sd,
 }
 
 static int tc358840_enum_frameintervals(struct v4l2_subdev *sd,
-				struct v4l2_subdev_pad_config *cfg,
+				struct v4l2_subdev_state *state,
 				struct v4l2_subdev_frame_interval_enum *fie)
 {
 	const struct camera_common_frmfmt *frmfmt = tc358840_frmfmt;
@@ -1993,7 +1994,6 @@ static struct v4l2_subdev_video_ops tc358840_subdev_video_ops = {
 	.s_dv_timings = tc358840_s_dv_timings,
 	.g_dv_timings = tc358840_g_dv_timings,
 	.query_dv_timings = tc358840_query_dv_timings,
-	.g_mbus_config = tc358840_g_mbus_config,
 	.s_stream = tc358840_s_stream,
 };
 
@@ -2019,6 +2019,7 @@ static const struct v4l2_subdev_pad_ops tc358840_pad_ops = {
 	.enum_dv_timings = tc358840_enum_dv_timings,
 	.enum_frame_size = tc358840_enum_framesizes,
 	.enum_frame_interval = tc358840_enum_frameintervals,
+	.get_mbus_config = tc358840_g_mbus_config
 };
 
 static struct v4l2_subdev_ops tc358840_ops = {

@@ -553,7 +553,6 @@ static int ov23850_g_input_status(struct v4l2_subdev *sd, u32 *status)
 
 static struct v4l2_subdev_video_ops ov23850_subdev_video_ops = {
 	.s_stream	= ov23850_s_stream,
-	.g_mbus_config	= camera_common_g_mbus_config,
 	.g_input_status	= ov23850_g_input_status,
 };
 
@@ -562,14 +561,14 @@ static struct v4l2_subdev_core_ops ov23850_subdev_core_ops = {
 };
 
 static int ov23850_get_fmt(struct v4l2_subdev *sd,
-		struct v4l2_subdev_pad_config *cfg,
+		struct v4l2_subdev_state *state,
 		struct v4l2_subdev_format *format)
 {
 	return camera_common_g_fmt(sd, &format->format);
 }
 
 static int ov23850_set_fmt(struct v4l2_subdev *sd,
-		struct v4l2_subdev_pad_config *cfg,
+		struct v4l2_subdev_state *state,
 	struct v4l2_subdev_format *format)
 {
 	int ret;
@@ -588,6 +587,7 @@ static struct v4l2_subdev_pad_ops ov23850_subdev_pad_ops = {
 	.enum_mbus_code = camera_common_enum_mbus_code,
 	.enum_frame_size	= camera_common_enum_framesizes,
 	.enum_frame_interval	= camera_common_enum_frameintervals,
+	.get_mbus_config	= camera_common_get_mbus_config,
 };
 
 static struct v4l2_subdev_ops ov23850_subdev_ops = {

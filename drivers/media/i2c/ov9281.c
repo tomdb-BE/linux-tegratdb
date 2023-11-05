@@ -171,7 +171,8 @@ static const struct regmap_config ov9281_regmap_config = {
 	.reg_bits = 16,
 	.val_bits = 8,
 	.cache_type = REGCACHE_RBTREE,
-	.use_single_rw = true,
+	.use_single_read = true,
+	.use_single_write = true,
 };
 
 static int ov9281_i2c_addr_assign(struct ov9281 *priv, u8 i2c_addr)
@@ -791,8 +792,8 @@ static int ov9281_g_input_status(struct v4l2_subdev *sd, u32 *status)
 }
 
 static int ov9281_set_fmt(struct v4l2_subdev *sd,
-			  struct v4l2_subdev_pad_config *cfg,
-			  struct v4l2_subdev_format *format)
+			struct v4l2_subdev_state *state,
+		 	struct v4l2_subdev_format *format)
 {
 	int err;
 
@@ -805,7 +806,7 @@ static int ov9281_set_fmt(struct v4l2_subdev *sd,
 }
 
 static int ov9281_get_fmt(struct v4l2_subdev *sd,
-			  struct v4l2_subdev_pad_config *cfg,
+			  struct v4l2_subdev_state *state,
 			  struct v4l2_subdev_format *format)
 {
 	return camera_common_g_fmt(sd, &format->format);
@@ -816,9 +817,8 @@ static struct v4l2_subdev_core_ops ov9281_subdev_core_ops = {
 };
 
 static struct v4l2_subdev_video_ops ov9281_subdev_video_ops = {
-	.s_stream	= ov9281_s_stream,
-	.g_mbus_config	= camera_common_g_mbus_config,
-	.g_input_status	= ov9281_g_input_status,
+	.s_stream	 = ov9281_s_stream,
+	.g_input_status	 = ov9281_g_input_status,
 };
 
 static struct v4l2_subdev_pad_ops ov9281_subdev_pad_ops = {
@@ -827,6 +827,7 @@ static struct v4l2_subdev_pad_ops ov9281_subdev_pad_ops = {
 	.enum_mbus_code	= camera_common_enum_mbus_code,
 	.enum_frame_size	= camera_common_enum_framesizes,
 	.enum_frame_interval	= camera_common_enum_frameintervals,
+	.get_mbus_config = camera_common_get_mbus_config,
 };
 
 static struct v4l2_subdev_ops ov9281_subdev_ops = {

@@ -943,7 +943,7 @@ static int cy8c_led_probe(struct i2c_client *client,
 	memset(&data->brd_boot, 0, sizeof(data->brd_boot));
 	strncpy(data->brd_boot.type, DEVICE_NAME, sizeof(data->brd_boot.type));
 	data->brd_boot.addr = P1961_BOOT_DEV_ADDR;
-	data->client_boot = i2c_new_device(data->adap, &data->brd_boot);
+	data->client_boot = i2c_new_client_device(data->adap, &data->brd_boot);
 
 	i2c_set_clientdata(client, data);
 

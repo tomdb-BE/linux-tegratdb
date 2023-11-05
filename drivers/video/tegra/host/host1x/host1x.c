@@ -37,6 +37,7 @@
 #include <linux/anon_inodes.h>
 #include <linux/kref.h>
 #include <linux/nospec.h>
+#include <linux/arm64-barrier.h>
 
 #include "dev.h"
 #include <trace/events/nvhost.h>

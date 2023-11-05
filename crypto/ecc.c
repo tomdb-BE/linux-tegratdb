@@ -35,7 +35,7 @@
 #include <asm/unaligned.h>
 #include <linux/ratelimit.h>
 
-#include "ecc.h"
+#include <crypto/ecc.h>
 #include "ecc_curve_defs.h"
 
 typedef struct {
@@ -201,15 +201,6 @@ void vli_from_le64(u64 *dest, const void *src, unsigned int ndigits)
 		dest[i] = get_unaligned_le64(&from[i]);
 }
 EXPORT_SYMBOL(vli_from_le64);
-
-/* Sets dest = src. */
-static void vli_set(u64 *dest, const u64 *src, unsigned int ndigits)
-{
-	int i;
-
-	for (i = 0; i < ndigits; i++)
-		dest[i] = src[i];
-}
 
 /* Returns sign of left - right. */
 int vli_cmp(const u64 *left, const u64 *right, unsigned int ndigits)
@@ -1660,5 +1651,65 @@ out:
 	return ret;
 }
 EXPORT_SYMBOL(crypto_ecdh_shared_secret);
+
+int ecc_is_pub_key_valid(unsigned int curve_id, unsigned int ndigits,
+                         const u8 *pub_key, unsigned int pub_key_len)
+{
+        const struct ecc_curve *curve = ecc_get_curve(curve_id);
+        int nbytes = ndigits << ECC_DIGITS_TO_BYTES_SHIFT;
+        struct ecc_point p;
+
+        if (!pub_key || pub_key_len != 2 * nbytes)
+                return -EINVAL;
+
+        p.x = (u64 *)pub_key;
+        p.y = (u64 *)(pub_key + ECC_MAX_DIGIT_BYTES);
+        p.ndigits = ndigits;
+
+        if (vli_cmp(curve->p, p.x, ndigits) != 1 ||
+            vli_cmp(curve->p, p.y, ndigits) != 1) {
+        }
+
+        return 0;
+}
+EXPORT_SYMBOL(ecc_is_pub_key_valid);
+
+/* Copy from vli to buf.
+ * For buffers smaller than vli: copy only LSB nbytes from vli.
+ * For buffers larger than vli : fill up remaining buf with zeroes.
+ */
+void vli_copy_to_buf(u8 *dst_buf, unsigned int buf_len,
+                     const u64 *src_vli, unsigned int ndigits)
+{
+        unsigned int nbytes = ndigits << ECC_DIGITS_TO_BYTES_SHIFT;
+        u8 *vli = (u8 *)src_vli;
+        int i;
+
+        for (i = 0; i < buf_len && i < nbytes; i++)
+                dst_buf[i] = vli[i];
+
+        for (; i < buf_len; i++)
+                dst_buf[i] = 0;
+}
+EXPORT_SYMBOL(vli_copy_to_buf);
+
+/* Copy from buffer to vli.
+ * For buffers smaller than vli: fill up remaining vli with zeroes.
+ * For buffers larger than vli : copy only LSB nbytes to vli.
+ */
+void vli_copy_from_buf(u64 *dst_vli, unsigned int ndigits,
+                       const u8 *src_buf, unsigned int buf_len)
+{
+        unsigned int nbytes = ndigits << ECC_DIGITS_TO_BYTES_SHIFT;
+        u8 *vli = (u8 *)dst_vli;
+        int i;
+
+        for (i = 0; i < buf_len && i < nbytes; i++)
+                vli[i] = src_buf[i];
+
+        for (; i < nbytes; i++)
+                vli[i] = 0;
+}
+EXPORT_SYMBOL(vli_copy_from_buf);
 
 MODULE_LICENSE("Dual BSD/GPL");

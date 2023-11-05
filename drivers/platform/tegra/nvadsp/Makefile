@@ -1,5 +1,6 @@
 GCOV_PROFILE := y
 ccflags-y += -Werror
+ccflags-y += -I$(srctree)/include
 
 obj-$(CONFIG_TEGRA_NVADSP) := nvadsp.o
 nvadsp-objs += dev.o os.o app.o app_loader_linker.o\

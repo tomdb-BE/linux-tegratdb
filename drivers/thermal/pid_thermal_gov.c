@@ -387,7 +387,7 @@ pid_thermal_gov_get_target(struct thermal_zone_device *tz,
 {
 	struct pid_thermal_governor *gov = tz_to_gov(tz);
 	int last_temperature = tz->passive ? tz->last_temperature : trip_temp;
-	int passive_delay = tz->passive ? tz->passive_delay : MSEC_PER_SEC;
+	int passive_delay = tz->passive ? jiffies_to_msecs(tz->passive_delay_jiffies) : MSEC_PER_SEC;
 	s64 proportional, derivative, sum_err, max_err;
 	unsigned long max_state, cur_state, target, compensation;
 

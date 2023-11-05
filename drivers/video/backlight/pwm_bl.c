@@ -19,26 +19,6 @@
 #include <linux/regulator/consumer.h>
 #include <linux/slab.h>
 
-struct pwm_bl_data {
-	struct pwm_device	*pwm;
-	struct device		*dev;
-	unsigned int		lth_brightness;
-	unsigned int		*levels;
-	bool			enabled;
-	struct regulator	*power_supply;
-	struct gpio_desc	*enable_gpio;
-	unsigned int		scale;
-	bool			legacy;
-	unsigned int		post_pwm_on_delay;
-	unsigned int		pwm_off_delay;
-	int			(*notify)(struct device *,
-					  int brightness);
-	void			(*notify_after)(struct device *,
-					int brightness);
-	int			(*check_fb)(struct device *, struct fb_info *);
-	void			(*exit)(struct device *);
-};
-
 static void pwm_backlight_power_on(struct pwm_bl_data *pb)
 {
 	struct pwm_state state;

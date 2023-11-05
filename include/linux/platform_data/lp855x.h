@@ -118,6 +118,11 @@ enum lp8557_brightness_source {
 	LP8557_COMBINED2,	/* pwm + i2c before the shaper block */
 };
 
+enum lp855x_brightness_ctrl_mode {
+        PWM_BASED = 1,
+        REGISTER_BASED,
+};
+
 struct lp855x_rom_data {
 	u8 addr;
 	u8 val;
@@ -140,6 +145,24 @@ struct lp855x_platform_data {
 	unsigned int period_ns;
 	int size_program;
 	struct lp855x_rom_data *rom_data;
+        u8 *bl_measured;
+        u8 *bl_curve;
+        bool skip_i2c_configuration;
+};
+
+struct lp855x {
+        const char *chipname;
+        enum lp855x_chip_id chip_id;
+        enum lp855x_brightness_ctrl_mode mode;
+        struct lp855x_device_config *cfg;
+        struct i2c_client *client;
+        struct backlight_device *bl;
+        struct device *dev;
+        struct lp855x_platform_data *pdata;
+        struct pwm_device *pwm;
+        struct regulator *supply;       /* regulator for VDD input */
+        struct regulator *enable;       /* regulator for EN/VDDIO input */
+        int (*notify)(struct device *, int brightness);
 };
 
 #endif

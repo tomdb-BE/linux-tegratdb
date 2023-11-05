@@ -3,7 +3,7 @@
  *  providing keys and microphone audio functionality
  *
  * Copyright (C) 2014 Google, Inc.
- * Copyright (c) 2015-2019, NVIDIA CORPORATION, All rights reserved.
+ * Copyright (c) 2015-2021,2023 NVIDIA CORPORATION, All rights reserved.
  *
  * This software is licensed under the terms of the GNU General Public
  * License version 2, as published by the Free Software Foundation, and
@@ -202,9 +202,9 @@ struct shdr_device {
 	struct delayed_work hid_miss_war_work;
 	struct mutex hid_miss_war_lock;
 	int hid_miss_war_timeout;
+	struct hid_debug_data	debug_info[MAX_DEBUG_REPORTS];
 	u32 last_ljsx, last_ljsy;	/* Last left joystick x, y */
 	u32 last_rjsx, last_rjsy;	/* Last right joystick x, y */
-	struct hid_debug_data	debug_info[MAX_DEBUG_REPORTS];
 };
 
 /* counter of how many continous silent timer callback in a row */
@@ -221,6 +221,9 @@ static bool cards_in_use[SNDRV_CARDS] = {false};
 static char *model[SNDRV_CARDS]; /* = {[0 ... (SNDRV_CARDS - 1)] = NULL}; */
 static int pcm_devs[SNDRV_CARDS] = {[0 ... (SNDRV_CARDS - 1)] = 1};
 static int pcm_substreams[SNDRV_CARDS] = {[0 ... (SNDRV_CARDS - 1)] = 1};
+
+static struct snd_pcm_substream *g_substream;
+static struct mutex g_substream_lock;
 
 module_param_array(index, int, NULL, 0444);
 MODULE_PARM_DESC(index, "Index value for SHIELD Remote soundcard.");
@@ -1061,18 +1064,21 @@ static int snd_atvr_schedule_timer(struct snd_pcm_substream *substream)
 	return ret;
 }
 
-static void snd_atvr_timer_callback(unsigned long data)
+static void snd_atvr_timer_callback(struct timer_list *timer)
 {
 	uint readable;
 	uint packets_read;
 	bool need_silence = false;
 	unsigned long flags;
-	struct snd_pcm_substream *substream = (struct snd_pcm_substream *)data;
-	struct snd_atvr *atvr_snd = snd_pcm_substream_chip(substream);
 #ifdef DEBUG_TIMER
 	struct timeval t0, t1;
 	int diff;
 #endif
+	struct snd_atvr *atvr_snd;
+
+	mutex_lock(&g_substream_lock);
+	atvr_snd = snd_pcm_substream_chip(g_substream);
+	mutex_unlock(&g_substream_lock);
 
 	/* timer_enabled will be false when stopping a stream. */
 	spin_lock_irqsave(&atvr_snd->timer_lock, flags);
@@ -1106,13 +1112,16 @@ static void snd_atvr_timer_callback(unsigned long data)
 		if (readable > 0) {
 			atvr_snd->timer_state = TIMER_STATE_DURING_DECODE;
 			/* Fall through into next state. */
+			goto during_decode;
 		} else {
 			need_silence = true;
 			break;
 		}
 
 	case TIMER_STATE_DURING_DECODE:
-		packets_read = snd_atvr_decode_from_fifo(substream);
+during_decode:	mutex_lock(&g_substream_lock);
+		packets_read = snd_atvr_decode_from_fifo(g_substream);
+		mutex_unlock(&g_substream_lock);
 
 		if (packets_read > 0) {
 			/* Defer timeout */
@@ -1153,7 +1162,9 @@ static void snd_atvr_timer_callback(unsigned long data)
 		spin_unlock_irqrestore(&atvr_snd->s_substream_lock, flags);
 		/* This can cause snd_atvr_pcm_trigger() to be called, which
 		 * may try to stop the timer. */
-		snd_atvr_handle_frame_advance(substream, frames_to_silence);
+		mutex_lock(&g_substream_lock);
+		snd_atvr_handle_frame_advance(g_substream, frames_to_silence);
+		mutex_unlock(&g_substream_lock);
 	} else {
 #ifdef DEBUG_TIMER
 		do_gettimeofday(&t1);
@@ -1168,14 +1179,16 @@ static void snd_atvr_timer_callback(unsigned long data)
 		pr_err("callback took %d ms\n", diff);
 #endif
 
+	mutex_lock(&g_substream_lock);
 	spin_lock_irqsave(&atvr_snd->timer_lock, flags);
 	if (need_silence)
 		silence_counter += 1;
 	else
 		silence_counter = 0;
 	if (atvr_snd->timer_enabled & ATVR_TIMER_ENABLED)
-		snd_atvr_schedule_timer(substream);
+		snd_atvr_schedule_timer(g_substream);
 	spin_unlock_irqrestore(&atvr_snd->timer_lock, flags);
+	mutex_unlock(&g_substream_lock);
 }
 
 static int snd_atvr_timer_start(struct snd_pcm_substream *substream)
@@ -1368,9 +1381,11 @@ static int snd_atvr_pcm_open(struct snd_pcm_substream *substream)
 #ifdef DEBUG_TIMER
 	snd_atvr_log("%s, built %s %s\n", __func__, __DATE__, __TIME__);
 #endif
+	mutex_lock(&g_substream_lock);
+	g_substream = substream;
+	mutex_unlock(&g_substream_lock);
 	/* Initialize the timer for the opened substream */
-	setup_timer(&atvr_snd->decoding_timer, snd_atvr_timer_callback,
-		    (unsigned long)substream);
+	timer_setup(&atvr_snd->decoding_timer, snd_atvr_timer_callback, 0);
 
 	return ret;
 }
@@ -1382,6 +1397,9 @@ static int snd_atvr_pcm_close(struct snd_pcm_substream *substream)
 
 	snd_atvr_timer_stop(substream);
 	del_timer_sync(&atvr_snd->decoding_timer);
+	mutex_lock(&g_substream_lock);
+	g_substream = NULL;
+	mutex_unlock(&g_substream_lock);
 
 #ifdef DEBUG_TIMER
 	if (atvr_snd->timer_callback_count > 0)
@@ -1414,7 +1432,7 @@ static snd_pcm_uframes_t snd_atvr_pcm_pointer(
 	return atvr_snd->write_index;
 }
 
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 14, 0)
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 10, 0)
 static int snd_atvr_pcm_copy(struct snd_pcm_substream *substream, int channel,
 			unsigned long pos, void __user *dst,
 			unsigned long count)
@@ -1456,7 +1474,7 @@ static int snd_atvr_pcm_copy(struct snd_pcm_substream *substream,
 	return 0;
 }
 
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 14, 0)
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 10, 0)
 static int snd_atvr_pcm_silence(struct snd_pcm_substream *substream, int channel,
 				unsigned long pos, unsigned long count)
 #else
@@ -1558,7 +1576,7 @@ static int atvr_snd_initialize(struct hid_device *hdev,
 	if (err)
 		goto __nodev;
 	/* dummy initialization */
-	setup_timer(&atvr_snd->decoding_timer,
+	timer_setup(&atvr_snd->decoding_timer,
 		snd_atvr_timer_callback, 0);
 
 	for (i = 0; i < MAX_PCM_DEVICES && i < pcm_devs[dev]; i++) {
@@ -1652,8 +1670,8 @@ static int atvr_jarvis_break_events(struct hid_device *hdev,
 	}
 
 	if ((hdev->product == USB_DEVICE_ID_NVIDIA_PEPPER ||
-				hdev->product == USB_DEVICE_ID_NVIDIA_FRIDAY) &&
-	    report->id == PEP_BUTTON_REPORT_ID) {
+		hdev->product == USB_DEVICE_ID_NVIDIA_FRIDAY) &&
+		report->id == PEP_BUTTON_REPORT_ID) {
 		int timeout;
 
 		mutex_lock(&shdr_dev->hid_miss_war_lock);
@@ -1743,8 +1761,8 @@ static u8 atvr_get_debug_report_idx(struct shdr_device *shdr_dev, u8 id)
 	for (i = 0; i < MAX_DEBUG_REPORTS; i++) {
 		if (shdr_dev->debug_info[i].id) {
 			if (shdr_dev->debug_info[i].id == id) {
-				pr_debug("%s: report id %d index is %d", __func__
-								  , id, i);
+				pr_debug("%s: report id %d index is %d",
+								__func__,id, i);
 				return i;
 			}
 		} else
@@ -1775,7 +1793,11 @@ static void atvr_process_debug_info(struct hid_debug_data *debug_info, u8 seq,
 				debug_info->seq_num, seq);
 
 	/* Ignore first packet time diff */
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 14, 0))
+	if (debug_info->time &&
+#else
 	if (debug_info->time.tv64 &&
+#endif
 			time_diff < MAX_TIME_BETWEEN_PACKETS &&
 			packet_delay > MAX_PACKET_DIFF_TOLERANCE)
 		pr_warn("%s: id:%d Packet delay:%d ms at seq %d host diff :%lli ms fw diff %d",
@@ -1795,9 +1817,6 @@ static int atvr_raw_event(struct hid_device *hdev, struct hid_report *report,
 	u8 idx = atvr_get_debug_report_idx(shdr_dev, report->id);
 	/*first byte is seq num and next 2 bytes time diff */
 
-	if (shdr_card == NULL)
-		return 0;
-
 	/* debug info is present and Min size check */
 	if (idx < MAX_DEBUG_REPORTS && size > 4) {
 		/*
@@ -1811,8 +1830,6 @@ static int atvr_raw_event(struct hid_device *hdev, struct hid_report *report,
 		atvr_process_debug_info(&shdr_dev->debug_info[idx], seq,
 					fw_time_diff, data[0]);
 	}
-
-	atvr_snd = shdr_card->private_data;
 
 #ifdef DEBUG_HID_RAW_INPUT
 	pr_info("%s: report->id = 0x%x, size = %d\n",
@@ -1828,7 +1845,10 @@ static int atvr_raw_event(struct hid_device *hdev, struct hid_report *report,
 	if (atvr_jarvis_break_events(hdev, report, data, size))
 		return 1;
 
-	if (report->id == ADPCM_AUDIO_REPORT_ID) {
+	if (shdr_card != NULL)
+		atvr_snd = shdr_card->private_data;
+
+	if (report->id == ADPCM_AUDIO_REPORT_ID && shdr_card != NULL) {
 		/* send the data, minus the report-id in data[0], to the
 		 * alsa audio decoder driver for ADPCM
 		 */
@@ -1839,7 +1859,7 @@ static int atvr_raw_event(struct hid_device *hdev, struct hid_report *report,
 		audio_dec(hdev, &data[1], PACKET_TYPE_ADPCM, size - 1);
 		/* we've handled the event */
 		return 1;
-	} else if (report->id == MSBC_AUDIO1_REPORT_ID) {
+	} else if (report->id == MSBC_AUDIO1_REPORT_ID && shdr_card != NULL) {
 		/* first do special case check if there is any
 		 * keyCode active in this report.  if so, we
 		 * generate the same keyCode but on report 2, which
@@ -1870,8 +1890,8 @@ static int atvr_raw_event(struct hid_device *hdev, struct hid_report *report,
 		audio_dec(hdev, &data[1 + 2], PACKET_TYPE_MSBC, size - 1 - 2);
 		/* we've handled the event */
 		return 1;
-	} else if ((report->id == MSBC_AUDIO2_REPORT_ID) ||
-		   (report->id == MSBC_AUDIO3_REPORT_ID)) {
+	} else if ((report->id == MSBC_AUDIO2_REPORT_ID ||
+		   report->id == MSBC_AUDIO3_REPORT_ID) && shdr_card != NULL) {
 		/* strip the one byte report id */
 		audio_dec(hdev, &data[1], PACKET_TYPE_MSBC, size - 1);
 		/* we've handled the event */
@@ -1993,19 +2013,22 @@ static int atvr_probe(struct hid_device *hdev, const struct hid_device_id *id)
 	 * AudioService.java delays enabling the output
 	 */
 	mutex_lock(&snd_cards_lock);
-	ret = atvr_snd_initialize(hdev, &shdr_card);
-	if (ret)
-		goto err_stop;
+	if (hdev->product != USB_DEVICE_ID_NVIDIA_FRIDAY) {
+		/* Skip creation for Friday for now */
+		ret = atvr_snd_initialize(hdev, &shdr_card);
+		if (ret)
+			goto err_stop;
 
-	/*
-	 * hdev pointer is not guaranteed to be the same thus following
-	 * stuff has to be updated every time.
-	 */
-	shdr_dev->shdr_card = shdr_card;
+		/*
+		 * hdev pointer is not guaranteed to be the same thus following
+		 * stuff has to be updated every time.
+		 */
+		shdr_dev->shdr_card = shdr_card;
+		atvr_snd = shdr_card->private_data;
+		atvr_snd->hdev = hdev;
+		snd_card_set_dev(shdr_card, &hdev->dev);
+	}
 	shdr_dev->hdev = hdev;
-	atvr_snd = shdr_card->private_data;
-	atvr_snd->hdev = hdev;
-	snd_card_set_dev(shdr_card, &hdev->dev);
 
 	silence_counter = 0;
 	pr_info("%s: remotes count %d->%d\n", __func__,
@@ -2054,9 +2077,6 @@ static void atvr_remove(struct hid_device *hdev)
 	struct snd_card *shdr_card = shdr_dev->shdr_card;
 	struct snd_atvr *atvr_snd;
 
-	if (shdr_card == NULL)
-		return;
-
 	cancel_work_sync(&shdr_dev->snsr_probe_work);
 
 	if (shdr_dev->snsr_fns && shdr_dev->snsr_fns->remove)
@@ -2079,15 +2099,17 @@ static void atvr_remove(struct hid_device *hdev)
 	}
 
 	mutex_lock(&snd_cards_lock);
-	atvr_snd = shdr_card->private_data;
+	if (shdr_card != NULL) {
+		atvr_snd = shdr_card->private_data;
 
-	spin_lock_irqsave(&atvr_snd->s_substream_lock, flags);
-	atvr_snd->substream_state |= ATVR_REMOVE;
-	spin_unlock_irqrestore(&atvr_snd->s_substream_lock, flags);
+		spin_lock_irqsave(&atvr_snd->s_substream_lock, flags);
+		atvr_snd->substream_state |= ATVR_REMOVE;
+		spin_unlock_irqrestore(&atvr_snd->s_substream_lock, flags);
 
-	mutex_lock(&atvr_snd->hdev_lock);
-	atvr_snd->hdev = NULL;
-	mutex_unlock(&atvr_snd->hdev_lock);
+		mutex_lock(&atvr_snd->hdev_lock);
+		atvr_snd->hdev = NULL;
+		mutex_unlock(&atvr_snd->hdev_lock);
+	}
 
 	hid_set_drvdata(hdev, NULL);
 	hid_hw_stop(hdev);
@@ -2095,11 +2117,14 @@ static void atvr_remove(struct hid_device *hdev)
 		__func__, hdev->name, num_remotes, num_remotes - 1);
 	num_remotes--;
 
-	cards_in_use[atvr_snd->card_index] = false;
-	snd_atvr_dealloc_audio_buffs(atvr_snd);
-	mutex_destroy(&atvr_snd->hdev_lock);
-	snd_card_disconnect(shdr_card);
-	snd_card_free_when_closed(shdr_card);
+	if (shdr_card != NULL) {
+		cards_in_use[atvr_snd->card_index] = false;
+		snd_atvr_dealloc_audio_buffs(atvr_snd);
+		mutex_destroy(&atvr_snd->hdev_lock);
+		snd_card_disconnect(shdr_card);
+		snd_card_free_when_closed(shdr_card);
+	}
+
 	mutex_destroy(&shdr_dev->hid_miss_war_lock);
 	kfree(shdr_dev);
 	mutex_unlock(&snd_cards_lock);
@@ -2114,6 +2139,11 @@ static int atvr_input_mapped(struct hid_device *hdev, struct hid_input *hi,
 	int fuzz;
 	int flat;
 	struct shdr_device *shdr_dev = hid_get_drvdata(hdev);
+
+	/* hid debug info report descriptor */
+	if (usage->hid == HID_GEN_DESK_DEBUG) {
+		atvr_set_hid_debug_report_idx(shdr_dev, field->report->id);
+	}
 
 	if ((usage->type == EV_ABS) && (field->application == HID_GD_GAMEPAD
 			|| field->application == HID_GD_JOYSTICK)) {
@@ -2132,7 +2162,7 @@ static int atvr_input_mapped(struct hid_device *hdev, struct hid_input *hi,
 			fuzz = TRIGGER_FUZZ;
 			flat = TRIGGER_FLAT;
 			break;
-		default: return 0;/*Use generic mapping for HatX, HatY*/
+		default: return 0; /*Use generic mapping for HatX, HatY*/
 		}
 		set_bit(usage->type, hi->input->evbit);
 		set_bit(usage->code, *bit);
@@ -2140,8 +2170,7 @@ static int atvr_input_mapped(struct hid_device *hdev, struct hid_input *hi,
 		input_abs_set_res(hi->input, usage->code,
 			hidinput_calc_abs_res(field, usage->code));
 		return -1;
-	} else if (usage->hid == HID_GEN_DESK_DEBUG)
-		atvr_set_hid_debug_report_idx(shdr_dev, field->report->id);
+	}
 	return 0;
 }
 
@@ -2154,12 +2183,8 @@ static const struct hid_device_id atvr_devices[] = {
 			      USB_DEVICE_ID_NVIDIA_FRIDAY)},
 	{HID_BLUETOOTH_DEVICE(USB_VENDOR_ID_NVIDIA,
 			      USB_DEVICE_ID_NVIDIA_THUNDERSTRIKE)},
-	{HID_BLUETOOTH_DEVICE(USB_VENDOR_ID_NVIDIA,
-			      USB_DEVICE_ID_NVIDIA_STORMCASTER)},
 	{HID_USB_DEVICE(USB_VENDOR_ID_NVIDIA,
 			      USB_DEVICE_ID_NVIDIA_THUNDERSTRIKE)},
-	{HID_USB_DEVICE(USB_VENDOR_ID_NVIDIA,
-			      USB_DEVICE_ID_NVIDIA_STORMCASTER)},
 	{ }
 };
 MODULE_DEVICE_TABLE(hid, atvr_devices);
@@ -2245,7 +2270,7 @@ static void atvr_ts_joystick_missreport_stats_inc(struct hid_device *hdev)
 	mutex_unlock(&stats_lock);
 }
 
-static ssize_t atvr_show_ts_joystick_stats(struct device_driver *driver,
+static ssize_t ts_joystick_stats_show(struct device_driver *driver,
 					   char *buf)
 {
 	struct ts_joystick_missreport_stat *stat;
@@ -2261,7 +2286,7 @@ static ssize_t atvr_show_ts_joystick_stats(struct device_driver *driver,
 	return count;
 }
 
-static ssize_t atvr_store_ts_joystick_stats(struct device_driver *driver,
+static ssize_t ts_joystick_stats_store(struct device_driver *driver,
 					     const char *buf, size_t count)
 {
 	struct ts_joystick_missreport_stat *stat;
@@ -2278,14 +2303,14 @@ static ssize_t atvr_store_ts_joystick_stats(struct device_driver *driver,
 	return count;
 }
 
-static DRIVER_ATTR(ts_joystick_stats, 0644,
-		   atvr_show_ts_joystick_stats, atvr_store_ts_joystick_stats);
+static DRIVER_ATTR_RW(ts_joystick_stats);
 
 static int atvr_init(void)
 {
 	int ret;
 
 	mutex_init(&snd_cards_lock);
+	mutex_init(&g_substream_lock);
 	ret = hid_register_driver(&atvr_driver);
 	if (ret) {
 		pr_err("%s: can't register SHIELD Remote driver\n",

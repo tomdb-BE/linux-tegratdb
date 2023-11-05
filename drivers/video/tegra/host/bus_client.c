@@ -31,6 +31,7 @@
 #include <linux/version.h>
 #include <linux/anon_inodes.h>
 #include <linux/crc32.h>
+#include <linux/arm64-barrier.h>
 
 #include <trace/events/nvhost.h>
 #include <uapi/linux/nvhost_events.h>
@@ -421,6 +422,7 @@ static int nvhost_init_error_notifier(struct nvhost_channel_userctx *ctx,
 	struct dma_buf *dmabuf;
 	void *va;
 	u64 end = args->offset + sizeof(struct nvhost_notification);
+	int ret;
 
 	/* are we releasing old reference? */
 	if (!args->mem) {
@@ -444,8 +446,8 @@ static int nvhost_init_error_notifier(struct nvhost_channel_userctx *ctx,
 	}
 
 	/* map handle and clear error notifier struct */
-	va = dma_buf_vmap(dmabuf);
-	if (!va) {
+	ret  = dma_buf_vmap(dmabuf, va);
+	if (!ret) {
 		dma_buf_put(dmabuf);
 		pr_err("%s: Cannot map notifier handle\n", __func__);
 		return -ENOMEM;

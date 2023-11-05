@@ -47,6 +47,7 @@
 #include <linux/tegra-firmwares.h>
 #include <linux/reset.h>
 #include <linux/poll.h>
+#include <linux/dma-iommu.h>
 
 #include <linux/uaccess.h>
 
@@ -655,7 +656,7 @@ static void *nvadsp_dma_alloc_and_map_at(struct platform_device *pdev,
 	 * It might allocate an excessive iova region but it would be handled
 	 * by IOMMU core during iommu_dma_free_iova().
 	 */
-	tmp_iova = iommu_dma_alloc_iova(dev, end - aligned_iova, end - pg_size);
+	tmp_iova = iommu_dma_alloc_iova(domain, size, end, dev);
 	if (tmp_iova != aligned_iova) {
 		dev_err(dev, "failed to reserve iova range [%llx, %llx]\n",
 			aligned_iova, end);
@@ -701,7 +702,7 @@ static void *nvadsp_dma_alloc_and_map_at(struct platform_device *pdev,
 
 	/* Unmap and free the tmp_iova since target iova is linked */
 	iommu_unmap(domain, tmp_iova, size);
-	iommu_dma_free_iova(dev, tmp_iova, size);
+	iommu_dma_free_iova(NULL, tmp_iova, size, NULL);
 
 	return cpu_va;
 
@@ -709,7 +710,7 @@ fail_map:
 	iommu_unmap(domain, iova, offset);
 	dma_free_coherent(dev, size, cpu_va, tmp_iova);
 fail_dma_alloc:
-	iommu_dma_free_iova(dev, end - aligned_iova, end - pg_size);
+	iommu_dma_free_iova(NULL, aligned_iova, size, NULL);
 
 	return NULL;
 }

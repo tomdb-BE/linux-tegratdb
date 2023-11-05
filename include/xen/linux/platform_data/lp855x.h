@@ -142,4 +142,19 @@ struct lp855x_platform_data {
 	struct lp855x_rom_data *rom_data;
 };
 
+struct lp855x {
+        const char *chipname;
+        enum lp855x_chip_id chip_id;
+        enum lp855x_brightness_ctrl_mode mode;
+        struct lp855x_device_config *cfg;
+        struct i2c_client *client;
+        struct backlight_device *bl;
+        struct device *dev;
+        struct lp855x_platform_data *pdata;
+        struct pwm_device *pwm;
+        struct regulator *supply;       /* regulator for VDD input */
+        struct regulator *enable;       /* regulator for EN/VDDIO input */
+        int (*notify)(struct device *, int brightness);
+};
+
 #endif

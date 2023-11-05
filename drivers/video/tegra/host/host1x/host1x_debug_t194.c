@@ -67,6 +67,7 @@ static void show_channel_gathers(struct output *o, struct nvhost_cdma *cdma)
 {
 	struct nvhost_job *job;
 	int i;
+	int ret;
 
 	mutex_lock(&cdma->sync_queue_lock);
 	if (list_empty(&cdma->sync_queue)) {
@@ -90,7 +91,7 @@ static void show_channel_gathers(struct output *o, struct nvhost_cdma *cdma)
 
 	for (i = 0; i < job->num_gathers; i++) {
 		struct nvhost_job_gather *g = &job->gathers[i];
-		u32 *mapped;
+		void *mapped;
 
 		/* Skip special gathers used to release mlocks (identified by
 		 * g->buf being NULL
@@ -101,8 +102,8 @@ static void show_channel_gathers(struct output *o, struct nvhost_cdma *cdma)
 			continue;
 		}
 
-		mapped = dma_buf_vmap(g->buf);
-		if (!mapped) {
+		ret = dma_buf_vmap(g->buf, mapped);
+		if (!ret) {
 			nvhost_debug_output(o, "[could not mmap]\n");
 			continue;
 		}

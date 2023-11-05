@@ -10,7 +10,7 @@
 #include <crypto/kpp.h>
 #include <crypto/ecdh.h>
 #include <linux/scatterlist.h>
-#include "ecc.h"
+#include <crypto/ecc.h>
 
 struct ecdh_ctx {
 	unsigned int curve_id;

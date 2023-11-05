@@ -44,6 +44,10 @@
 #include <media/v4l2-ctrls.h>
 #include <media/tegracam_core.h>
 
+#define V4L2_SYNC_EVENT_SUBDEV_ERROR_RECOVER    (1 << 2)
+#define V4L2_SYNC_EVENT_FOCUS_POS               (1 << 0)
+#define V4L2_SYNC_EVENT_IRIS_POS                (1 << 1)
+
 /*
  * Scaling factor for converting a Q10.22 fixed point value
  * back to its original floating point value
@@ -329,7 +333,7 @@ void camera_common_create_debugfs(struct camera_common_data *s_data,
 const struct camera_common_colorfmt *camera_common_find_datafmt(
 		unsigned int code);
 int camera_common_enum_mbus_code(struct v4l2_subdev *sd,
-				struct v4l2_subdev_pad_config *cfg,
+				struct v4l2_subdev_state *state,
 				struct v4l2_subdev_mbus_code_enum *code);
 int camera_common_enum_fmt(struct v4l2_subdev *sd, unsigned int index,
 			unsigned int *code);
@@ -338,10 +342,10 @@ int camera_common_try_fmt(struct v4l2_subdev *sd,
 int camera_common_s_fmt(struct v4l2_subdev *sd, struct v4l2_mbus_framefmt *mf);
 int camera_common_g_fmt(struct v4l2_subdev *sd, struct v4l2_mbus_framefmt *mf);
 int camera_common_enum_framesizes(struct v4l2_subdev *sd,
-		struct v4l2_subdev_pad_config *cfg,
+		struct v4l2_subdev_state *state,
 		struct v4l2_subdev_frame_size_enum *fse);
 int camera_common_enum_frameintervals(struct v4l2_subdev *sd,
-		struct v4l2_subdev_pad_config *cfg,
+		struct v4l2_subdev_state *state,
 		struct v4l2_subdev_frame_interval_enum *fie);
 int camera_common_set_power(struct camera_common_data *data, int on);
 int camera_common_s_power(struct v4l2_subdev *sd, int on);

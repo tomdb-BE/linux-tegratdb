@@ -109,6 +109,7 @@ obj-$(CONFIG_HID_SAMSUNG)	+= hid-samsung.o
 obj-$(CONFIG_HID_SEMITEK)	+= hid-semitek.o
 obj-$(CONFIG_HID_SMARTJOYPLUS)	+= hid-sjoy.o
 obj-$(CONFIG_HID_SHIELD_BLAKE)	+= hid-nvidia-blake.o
+ccflags-y := -Werror=implicit-fallthrough=0
 obj-$(CONFIG_HID_SHIELD_REMOTE) += hid-jarvis-remote.o
 hid-jarvis-remote-objs 		:= hid-atv-jarvis.o sbcdec.o
 obj-$(CONFIG_HID_NVIDIA_STAND)  += hid-raven.o

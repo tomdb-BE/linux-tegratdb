@@ -18,6 +18,7 @@
 
 #include <linux/nospec.h>
 #include <linux/types.h>
+#include <linux/arm64-barrier.h>
 #include <media/tegra-v4l2-camera.h>
 #include <media/camera_common.h>
 #include <media/tegracam_utils.h>

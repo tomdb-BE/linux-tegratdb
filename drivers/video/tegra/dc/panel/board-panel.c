@@ -27,6 +27,7 @@
 #include <linux/platform_device.h>
 #include <linux/of.h>
 #include <linux/of_address.h>
+#include <linux/arm64-barrier.h>
 #include "../dc.h"
 #include "../dc_priv.h"
 #include "board-panel.h"

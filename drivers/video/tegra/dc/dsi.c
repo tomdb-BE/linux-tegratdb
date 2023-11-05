@@ -5110,7 +5110,7 @@ static int tegra_dsi_deep_sleep(struct tegra_dc *dc,
 
 	cancel_delayed_work(&dsi->idle_work);
 
-	tegra_dsi_bl_off(get_backlight_device_by_name(dsi->info.bl_name));
+	tegra_dsi_bl_off(backlight_device_get_by_name(dsi->info.bl_name));
 
 	/* Suspend DSI panel */
 	err = tegra_dsi_send_panel_cmd(dc, dsi,

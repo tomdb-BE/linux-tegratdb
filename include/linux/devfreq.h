@@ -61,6 +61,7 @@ struct devfreq_dev_status {
 	unsigned long busy_time;
 	unsigned long current_frequency;
 	void *private_data;
+        bool busy;
 };
 
 /*
@@ -113,6 +114,9 @@ struct devfreq_dev_profile {
 	int (*get_dev_status)(struct device *dev,
 			      struct devfreq_dev_status *stat);
 	int (*get_cur_freq)(struct device *dev, unsigned long *freq);
+        int (*set_high_wmark)(struct device *dev, unsigned int val);
+        int (*set_low_wmark)(struct device *dev, unsigned int val);
+
 	void (*exit)(struct device *dev);
 
 	unsigned long *freq_table;
@@ -209,6 +213,8 @@ struct devfreq {
 
 	struct notifier_block nb_min;
 	struct notifier_block nb_max;
+
+	bool suspended;
 };
 
 struct devfreq_freqs {
@@ -231,6 +237,7 @@ void devm_devfreq_remove_device(struct device *dev, struct devfreq *devfreq);
 /* Supposed to be called by PM callbacks */
 int devfreq_suspend_device(struct devfreq *devfreq);
 int devfreq_resume_device(struct devfreq *devfreq);
+int devfreq_watermark_event(struct devfreq *devfreq, int type);
 
 void devfreq_suspend(void);
 void devfreq_resume(void);

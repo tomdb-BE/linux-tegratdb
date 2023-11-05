@@ -8,7 +8,7 @@
 #include <linux/dma-buf.h>
 #include <linux/dma-mapping.h>
 #include <uapi/linux/nvhost_ioctl.h>
-
+#include "../nvmap/nvmap_priv.h"
 #include "host1x/host1x.h"
 #include "nvhost_syncpt.h"
 #include "syncpt_fd.h"

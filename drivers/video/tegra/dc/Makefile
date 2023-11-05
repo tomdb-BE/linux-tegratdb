@@ -1,5 +1,6 @@
 GCOV_PROFILE := y
 subdir-ccflags-y := -Werror
+ccflags-y := -Werror=implicit-fallthrough=0
 ccflags-y += -I$(srctree)/drivers/video/tegra/host
 ccflags-y += -I$(srctree)/drivers/video/tegra/dc
 ccflags-y += -I$(srctree)/drivers/platform/tegra
@@ -12,7 +13,7 @@ obj-y += t21x/lut.o
 obj-y += cursor.o
 obj-y += of_dc.o
 ccflags-y +=-DCOMMON_MIPICAL_SUPPORTED\
-	-I$(overlay)/drivers/media/platform/tegra
+	-I$(srctree)/drivers/media/platform/tegra
 
 #obj-y += hdcp/
 

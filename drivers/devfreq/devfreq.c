@@ -1147,6 +1147,7 @@ int devfreq_suspend_device(struct devfreq *devfreq)
 		mutex_lock(&devfreq->lock);
 		ret = devfreq_set_target(devfreq, devfreq->suspend_freq, 0);
 		mutex_unlock(&devfreq->lock);
+		devfreq->suspended = 1;
 		if (ret)
 			return ret;
 	}
@@ -1177,6 +1178,7 @@ int devfreq_resume_device(struct devfreq *devfreq)
 		mutex_lock(&devfreq->lock);
 		ret = devfreq_set_target(devfreq, devfreq->resume_freq, 0);
 		mutex_unlock(&devfreq->lock);
+		devfreq->suspended = 0;
 		if (ret)
 			return ret;
 	}
@@ -1955,6 +1957,24 @@ static int devfreq_summary_show(struct seq_file *s, void *data)
 	return 0;
 }
 DEFINE_SHOW_ATTRIBUTE(devfreq_summary);
+
+/**
+ * devfreq_watermark_event() - Handles watermark events
+ * @devfreq: the devfreq instance to be updated
+ * @type: type of watermark event
+ */
+int devfreq_watermark_event(struct devfreq *devfreq, int type)
+{
+        if (!devfreq)
+                return -EINVAL;
+
+        if (!devfreq->governor)
+                return -EINVAL;
+
+        return devfreq->governor->event_handler(devfreq,
+                                DEVFREQ_GOV_WMARK, &type);
+}
+EXPORT_SYMBOL(devfreq_watermark_event);
 
 static int __init devfreq_init(void)
 {

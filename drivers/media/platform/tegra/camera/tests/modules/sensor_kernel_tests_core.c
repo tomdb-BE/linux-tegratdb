@@ -373,19 +373,19 @@ static int skt_run_tests(struct sk_buff *skb, struct genl_info *info)
 	int err = 0;
 
 	if (info->attrs[SKT_ATTR_GLOB] != NULL) {
-		nla_strlcpy(ctx->glob, info->attrs[SKT_ATTR_GLOB],
+		nla_strscpy(ctx->glob, info->attrs[SKT_ATTR_GLOB],
 				SKT_RUNNER_STR_LEN);
 	} else
 		ctx->glob[0] = '\0';
 
 	if (info->attrs[SKT_ATTR_SEN_COMPAT] != NULL) {
-		nla_strlcpy(ctx->compat, info->attrs[SKT_ATTR_SEN_COMPAT],
+		nla_strscpy(ctx->compat, info->attrs[SKT_ATTR_SEN_COMPAT],
 				SKT_RUNNER_STR_LEN);
 	} else
 		ctx->compat[0] = '\0';
 
 	if (info->attrs[SKT_ATTR_SEN_NAME] != NULL) {
-		nla_strlcpy(ctx->name, info->attrs[SKT_ATTR_SEN_NAME],
+		nla_strscpy(ctx->name, info->attrs[SKT_ATTR_SEN_NAME],
 				SKT_RUNNER_STR_LEN);
 	} else
 		ctx->name[0] = '\0';

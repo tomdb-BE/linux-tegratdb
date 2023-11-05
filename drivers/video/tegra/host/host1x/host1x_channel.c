@@ -225,6 +225,7 @@ static void submit_work(struct nvhost_job *job)
 		pdata->resource_policy == RESOURCE_PER_CHANNEL_INSTANCE;
 	u32 cur_class = 0;
 	int i;
+	int ret;
 
 	/* make all waits in the beginning */
 	push_waits(job);
@@ -266,13 +267,13 @@ static void submit_work(struct nvhost_job *job)
 		op2 = job->gathers[i].mem_base + g->offset;
 
 		if (nvhost_debug_trace_cmdbuf)
-			cpuva = dma_buf_vmap(g->buf);
+			ret = dma_buf_vmap(g->buf, cpuva);
 		nvhost_cdma_push_gather(&job->ch->cdma,
 				cpuva,
 				job->gathers[i].mem_base,
 				g->offset,
 				op1, op2);
-		if (cpuva)
+		if (ret)
 			dma_buf_vunmap(g->buf, cpuva);
 	}
 

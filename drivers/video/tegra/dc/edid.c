@@ -24,6 +24,7 @@
 #include <linux/seq_file.h>
 #include <linux/vmalloc.h>
 #include <linux/delay.h>
+#include <linux/arm64-barrier.h>
 
 #include "edid.h"
 #include "dc_priv.h"

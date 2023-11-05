@@ -8,3 +8,10 @@ obj-$(CONFIG_PCI_ENDPOINT)		+= pci-epc-core.o pci-epf-core.o\
 					   pci-epc-mem.o functions/
 obj-$(CONFIG_PCIE_EPF_NV_TEST)		+= pci-epf-nv-test.o
 obj-$(CONFIG_PCIE_EPF_TEGRA_VNET)	+= pci-epf-tegra-vnet.o
+
+ifdef CONFIG_ARCH_TEGRA_19x_SOC
+
+obj-$(CONFIG_PCIE_TEGRA_DW_EP) += pcie-tegra-dw-ep.o
+
+endif
+

@@ -25,6 +25,7 @@
 #include <soc/tegra/fuse.h>
 #include <asm/cacheflush.h>
 
+#include "../nvmap/nvmap_priv.h"
 #include "dev.h"
 #include "bus_client.h"
 #include "tsec.h"
@@ -111,7 +112,7 @@ static int tsec_read_riscv_bin(struct platform_device *dev,
 	/* Copy the whole image taking endianness into account */
 	for (w = 0; w < riscv_image->size/sizeof(u32); w++)
 		m->mapped[w] = le32_to_cpu(((__le32 *)riscv_image->data)[w]);
-	__flush_dcache_area((void *)m->mapped, riscv_image->size);
+	dcache_clean_inval_poc((unsigned long) m->mapped, (unsigned long) m->mapped + riscv_image->size);
 
 	/* Read the offsets from desc binary */
 	err = riscv_compute_ucode_offsets(dev, m, riscv_desc);

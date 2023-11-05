@@ -38,6 +38,7 @@
 #if KERNEL_VERSION(5, 4, 0) < LINUX_VERSION_CODE
 #include <linux/fbcon.h>
 #endif
+#include <linux/arm64-barrier.h>
 
 #include <linux/iommu.h>
 

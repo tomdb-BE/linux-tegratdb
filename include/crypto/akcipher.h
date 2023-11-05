@@ -36,6 +36,7 @@ struct akcipher_request {
 	struct scatterlist *dst;
 	unsigned int src_len;
 	unsigned int dst_len;
+	void *info;
 	void *__ctx[] CRYPTO_MINALIGN_ATTR;
 };
 

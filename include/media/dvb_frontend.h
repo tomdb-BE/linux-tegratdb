@@ -345,6 +345,7 @@ struct dvb_frontend_internal_info {
 	u32	symbol_rate_max;
 	u32	symbol_rate_tolerance;
 	enum fe_caps caps;
+	u32	type;
 };
 
 /**

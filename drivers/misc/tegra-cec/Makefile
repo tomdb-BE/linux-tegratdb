@@ -4,6 +4,6 @@
 
 subdir-ccflags-y	= -Werror
 
-ccflags-y += -I$(overlay)/drivers/video/tegra/dc
+ccflags-y += -I$(srctree)/drivers/video/tegra/dc
 
 obj-$(CONFIG_TEGRA_CEC_SUPPORT)	+= tegra_cec.o

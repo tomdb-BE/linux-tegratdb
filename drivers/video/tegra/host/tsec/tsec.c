@@ -33,6 +33,7 @@
 
 #include <linux/version.h>
 
+#include "../nvmap/nvmap_priv.h"
 #include "platform.h"
 #include "dev.h"
 #include "tsec.h"

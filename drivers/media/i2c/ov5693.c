@@ -661,7 +661,7 @@ static int ov5693_eeprom_device_init(struct ov5693 *priv)
 		strncpy(priv->eeprom[i].brd.type, dev_name,
 				sizeof(priv->eeprom[i].brd.type));
 		priv->eeprom[i].brd.addr = OV5693_EEPROM_ADDRESS + i;
-		priv->eeprom[i].i2c_client = i2c_new_device(
+		priv->eeprom[i].i2c_client = i2c_new_client_device(
 				priv->eeprom[i].adap, &priv->eeprom[i].brd);
 
 		priv->eeprom[i].regmap = devm_regmap_init_i2c(

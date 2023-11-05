@@ -82,7 +82,8 @@ static const struct regmap_config sensor_regmap_config = {
 	.reg_bits = 16,
 	.val_bits = 8,
 	.cache_type = REGCACHE_RBTREE,
-	.use_single_rw = true,
+	.use_single_read = true,
+	.use_single_write = true,
 };
 
 static int imx185_g_volatile_ctrl(struct v4l2_ctrl *ctrl);
@@ -406,7 +407,7 @@ static int imx185_s_stream(struct v4l2_subdev *sd, int enable)
 		control[1].id = TEGRA_CAMERA_CID_FRAME_RATE;
 		control[2].id = TEGRA_CAMERA_CID_EXPOSURE;
 
-		err = v4l2_g_ext_ctrls(&priv->ctrl_handler, &ctrls);
+		err = v4l2_g_ext_ctrls(&priv->ctrl_handler, NULL, NULL, &ctrls);
 		if (err == 0) {
 			err |= imx185_set_gain(priv, control[0].value64);
 			if (err)
@@ -459,7 +460,6 @@ static int imx185_g_input_status(struct v4l2_subdev *sd, u32 *status)
 
 static struct v4l2_subdev_video_ops imx185_subdev_video_ops = {
 	.s_stream	= imx185_s_stream,
-	.g_mbus_config	= camera_common_g_mbus_config,
 	.g_input_status = imx185_g_input_status,
 };
 
@@ -468,14 +468,14 @@ static struct v4l2_subdev_core_ops imx185_subdev_core_ops = {
 };
 
 static int imx185_get_fmt(struct v4l2_subdev *sd,
-		struct v4l2_subdev_pad_config *cfg,
+		struct v4l2_subdev_state *state,
 		struct v4l2_subdev_format *format)
 {
 	return camera_common_g_fmt(sd, &format->format);
 }
 
 static int imx185_set_fmt(struct v4l2_subdev *sd,
-		struct v4l2_subdev_pad_config *cfg,
+		struct v4l2_subdev_state *state,
 	struct v4l2_subdev_format *format)
 {
 	int ret;
@@ -494,6 +494,7 @@ static struct v4l2_subdev_pad_ops imx185_subdev_pad_ops = {
 	.enum_mbus_code = camera_common_enum_mbus_code,
 	.enum_frame_size	= camera_common_enum_framesizes,
 	.enum_frame_interval	= camera_common_enum_frameintervals,
+	.get_mbus_config	= camera_common_get_mbus_config
 };
 
 static struct v4l2_subdev_ops imx185_subdev_ops = {

@@ -44,6 +44,7 @@
 #include <uapi/video/tegrafb.h>
 #include <drm/drm_fixed.h>
 #include <linux/dma-buf.h>
+#include <linux/arm64-barrier.h>
 #include <linux/extcon/extcon-disp.h>
 #include <linux/extcon.h>
 #ifdef CONFIG_SWITCH
@@ -3165,9 +3166,7 @@ static void tegra_dc_create_debugfs(struct tegra_dc *dc)
 			if (!retval)
 				goto remove_out;
 
-			retval = tegra_nvdisp_create_imp_lock_debugfs(dc);
-			if (!retval)
-				goto remove_out;
+			tegra_nvdisp_create_imp_lock_debugfs(dc);
 		}
 	}
 
@@ -7231,11 +7230,7 @@ static int suspend_get(char *buffer, struct kernel_param *kp)
 }
 
 static int suspend;
-#if ((LINUX_VERSION_CODE >= KERNEL_VERSION(4, 9, 141)) && (LINUX_VERSION_CODE < KERNEL_VERSION(4, 14, 0)))
 module_param_call(suspend, (void *)suspend_set, (void *)suspend_get, &suspend, 0644);
-#else
-module_param_call(suspend, suspend_set, suspend_get, &suspend, 0644);
-#endif
 
 #ifndef MODULE
 static int __init parse_disp_params(char *options, struct tegra_dc_mode *mode)
@@ -7665,8 +7660,8 @@ static void tegra_dc_collect_latency_data(struct tegra_dc *dc)
 		return;
 	}
 
-	ptr = dma_buf_vmap(handle);
-	if (!ptr) {
+	ret = dma_buf_vmap(handle, ptr);
+	if (!ret) {
 		dev_err(&dc->ndev->dev, "dma_buf_vmap failed\n");
 		dma_buf_end_cpu_access(handle,
 #if KERNEL_VERSION(5, 4, 0) > LINUX_VERSION_CODE

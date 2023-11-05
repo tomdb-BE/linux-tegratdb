@@ -14,6 +14,7 @@
  * GNU General Public License for more details.
  */
 
+#include <linux/arm64-barrier.h>
 #include "edid.h"
 
 static inline u16 combine_hi_lo(unsigned int hi, unsigned int lo)

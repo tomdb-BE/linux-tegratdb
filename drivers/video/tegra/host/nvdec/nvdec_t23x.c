@@ -20,6 +20,7 @@
 #include <linux/iommu.h>
 #include <linux/iopoll.h>
 #include <linux/dma-mapping.h>
+#include "../nvmap/nvmap_priv.h"
 #include <linux/platform/tegra/tegra_mc.h>
 #if defined(CONFIG_TRUSTED_LITTLE_KERNEL) || defined(CONFIG_TRUSTY)
 #include <linux/ote_protocol.h>

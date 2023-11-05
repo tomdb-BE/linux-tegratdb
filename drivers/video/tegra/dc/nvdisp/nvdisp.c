@@ -4861,9 +4861,10 @@ void tegra_nvdisp_set_msrmnt_mode(struct tegra_dc *dc, bool enable)
 }
 
 #ifdef CONFIG_DEBUG_FS
-inline struct dentry *tegra_nvdisp_create_imp_lock_debugfs(struct tegra_dc *dc)
+void tegra_nvdisp_create_imp_lock_debugfs(struct tegra_dc *dc)
 {
-	return debugfs_create_bool("imp_lock_mode", 0644, dc->debug_common_dir,
+	debugfs_create_bool("imp_lock_mode", 0644, dc->debug_common_dir,
 				&g_imp.lock_mode_enabled);
 }
 #endif
+

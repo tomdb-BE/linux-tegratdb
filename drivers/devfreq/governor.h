@@ -23,6 +23,7 @@
 #define DEVFREQ_GOV_UPDATE_INTERVAL		0x3
 #define DEVFREQ_GOV_SUSPEND			0x4
 #define DEVFREQ_GOV_RESUME			0x5
+#define DEVFREQ_GOV_WMARK                   	0x6
 
 #define DEVFREQ_MIN_FREQ			0
 #define DEVFREQ_MAX_FREQ			ULONG_MAX
@@ -73,6 +74,7 @@ struct devfreq_governor {
 	int (*get_target_freq)(struct devfreq *this, unsigned long *freq);
 	int (*event_handler)(struct devfreq *devfreq,
 				unsigned int event, void *data);
+	bool interrupt_driven;
 };
 
 void devfreq_monitor_start(struct devfreq *devfreq);
