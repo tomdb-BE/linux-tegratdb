@@ -25,10 +25,22 @@
 #define MSG_RING	BIT(1)
 #define TAG_SZ		32
 
+static void *hv_virt_base;
+static struct device *device;
+char firmware_tag[sizeof(struct mrq_query_fw_tag_response)];
+
 static inline struct tegra_bpmp *
 mbox_client_to_bpmp(struct mbox_client *client)
 {
 	return container_of(client, struct tegra_bpmp, mbox.client);
+}
+
+static void *bpmp_get_virt_for_alloc(void *virt, dma_addr_t phys)
+{
+        if (hv_virt_base)
+                return hv_virt_base + phys;
+
+        return virt;
 }
 
 static inline const struct tegra_bpmp_ops *
