@@ -726,47 +726,22 @@ DEFINE_ENTRY(read_ll);
 
 static int init_debugfs(struct ep_pvt *ep)
 {
-	struct dentry *d;
-
-	d = debugfs_create_x64("src", 0644, ep->debugfs,
+	debugfs_create_x64("src", 0644, ep->debugfs,
 			       &ep->src);
-	if (!d)
-		pr_err("debugfs for src addr failed\n");
-
-	d = debugfs_create_x64("dst", 0644, ep->debugfs,
+	debugfs_create_x64("dst", 0644, ep->debugfs,
 			       &ep->dst);
-	if (!d)
-		pr_err("debugfs for dst addr failed\n");
-
-	d = debugfs_create_x32("size", 0644, ep->debugfs,
+	debugfs_create_x32("size", 0644, ep->debugfs,
 			       &ep->size);
-	if (!d)
-		pr_err("debugfs for size failed\n");
-
-	d = debugfs_create_x8("channel", 0644, ep->debugfs,
+	debugfs_create_x8("channel", 0644, ep->debugfs,
 			      &ep->channel);
-	if (!d)
-		pr_err("debugfs for channel failed\n");
-
-	d = debugfs_create_file("write", 0444, ep->debugfs, (void *)ep,
+	debugfs_create_file("write", 0444, ep->debugfs, (void *)ep,
 				&write_fops);
-	if (!d)
-		pr_err("debugfs for write failed\n");
-
-	d = debugfs_create_file("write_ll", 0444, ep->debugfs, (void *)ep,
+	debugfs_create_file("write_ll", 0444, ep->debugfs, (void *)ep,
 				&write_ll_fops);
-	if (!d)
-		pr_err("debugfs for write failed\n");
-
-	d = debugfs_create_file("read", 0444, ep->debugfs, (void *)ep,
+	debugfs_create_file("read", 0444, ep->debugfs, (void *)ep,
 				&read_fops);
-	if (!d)
-		pr_err("debugfs for read failed\n");
-
-	d = debugfs_create_file("read_ll", 0444, ep->debugfs, (void *)ep,
+	debugfs_create_file("read_ll", 0444, ep->debugfs, (void *)ep,
 				&read_ll_fops);
-	if (!d)
-		pr_err("debugfs for read failed\n");
 	return 0;
 }
 

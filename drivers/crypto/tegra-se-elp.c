@@ -38,7 +38,7 @@
 #include <linux/fips.h>
 #include <crypto/ecdh.h>
 #include <crypto/internal/akcipher.h>
-#include <crypto/ecdsa.h>
+#include "ecdsa.h"
 
 #include "tegra-se-elp.h"
 

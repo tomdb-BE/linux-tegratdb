@@ -206,6 +206,19 @@ struct pstore_info {
 extern int pstore_register(struct pstore_info *);
 extern void pstore_unregister(struct pstore_info *);
 
+enum rtrace_event_type {
+        RTRACE_READ = 0,
+        RTRACE_WRITE = 1,
+};
+
+#ifndef CONFIG_PSTORE_RTRACE
+static inline void
+pstore_rtrace_call(enum rtrace_event_type log_type, void *data)
+{ }
+static inline void pstore_rtrace_set_bypass(int bypass)
+{ }
+#endif
+
 struct pstore_ftrace_record {
 	unsigned long ip;
 	unsigned long parent_ip;

@@ -265,7 +265,7 @@ static void submit_work(struct nvhost_job *job)
 	struct nvhost_device_data *pdata = platform_get_drvdata(job->ch->dev);
 	void *cpuva = NULL;
 	int i;
-	int ret;
+	int ret = 0;
 
 	/* First, move us into host class */
 	u32 cur_class = NV_HOST1X_CLASS_ID;

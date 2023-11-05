@@ -21,8 +21,12 @@
 #define __LINUX_CVNAS_H
 
 int nvcvnas_busy(void);
+int nvcvnas_busy_no_rpm(void);
 int nvcvnas_idle(void);
+int nvcvnas_idle_no_rpm(void);
+int is_nvcvnas_probed(void);
 phys_addr_t nvcvnas_get_cvsram_base(void);
 size_t nvcvnas_get_cvsram_size(void);
+int is_nvcvnas_clk_enabled(void);
 
 #endif

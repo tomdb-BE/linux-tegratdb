@@ -10,6 +10,6 @@ obj-$(CONFIG_VIDEO_TEGRA_VI) += vi_notify.o
 
 ccflags-y += -Werror
 
-nvhost-vi5-objs = vi5.o
+obj-y += vi5.o
 
 #obj-$(CONFIG_VIDEO_TEGRA_VI) += nvhost-vi5.o

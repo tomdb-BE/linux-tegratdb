@@ -13,13 +13,13 @@
 
 #include <linux/fdtable.h>
 #include <linux/fs.h>
-
+#include <linux/file.h>
 #include <linux/platform/tegra/tegra_fd.h>
 
 /* allocates a free fd within [start, sysctl_nr_open) range */
 int tegra_alloc_fd(struct files_struct *files, unsigned int start,
-		   unsigned int flags)
+                   unsigned int flags)
 {
-	return __alloc_fd(files, start, sysctl_nr_open, flags);
+        return __alloc_fd(start, sysctl_nr_open, flags);
 }
 EXPORT_SYMBOL_GPL(tegra_alloc_fd);

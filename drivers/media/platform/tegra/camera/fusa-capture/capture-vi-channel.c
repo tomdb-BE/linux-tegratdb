@@ -30,6 +30,7 @@
 #include <linux/uaccess.h>
 #include <linux/dma-buf.h>
 #include <linux/dma-mapping.h>
+#include <linux/arm64-barrier.h>
 
 #include "nvhost_acm.h"
 #include <media/fusa-capture/capture-vi.h>

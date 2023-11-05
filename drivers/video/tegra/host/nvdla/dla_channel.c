@@ -7,6 +7,7 @@
  */
 
 #include <linux/platform_device.h>
+#include <linux/arm64-barrier.h>
 
 #include "dla_channel.h"
 #include "nvdla_debug.h"

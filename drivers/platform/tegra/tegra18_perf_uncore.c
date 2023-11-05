@@ -101,16 +101,6 @@ enum denver_uncore_perf_types {
 #define ARMV8_EXCLUDE_EL0	(1 << 30)
 #define ARMV8_INCLUDE_EL2	(1 << 27)
 
-struct uncore_pmu {
-        struct platform_device *pdev;
-        struct pmu pmu;
-        struct uncore_unit clusters[NUM_L2S];
-        struct uncore_unit scf;
-        struct list_head units;
-        DECLARE_BITMAP(used_units, NUM_L2S + 1);
-        struct uncore_unit *cur_unit;
-};
-
 static struct dmce_perfmon_cnt_info denver_uncore_event[DENVER_MAX_UNCORE_CNTS];
 
 static u32 mce_perfmon_rw(uint8_t command, uint8_t group, uint8_t unit,
@@ -284,6 +274,11 @@ static inline u32 denver15pmu_read_counter(struct perf_event *event)
 	return value;
 }
 
+static inline u64 denver15pmu_read_counter_u64(struct perf_event *event)
+{
+	return (u64) denver15pmu_read_counter(event);
+}
+
 static inline void denver15pmu_write_counter(struct perf_event *event,
 		u32 value)
 {
@@ -297,6 +292,12 @@ static inline void denver15pmu_write_counter(struct perf_event *event,
 	else
 		pr_err("CPU%u writing wrong counter %d\n",
 			smp_processor_id(), idx);
+}
+
+static inline void denver15pmu_write_counter_u64(struct perf_event *event,
+		u64 value)
+{
+        denver15pmu_write_counter(event, (u32) value);
 }
 
 static inline void denver15pmu_write_evtype(int idx, u32 val)
@@ -455,11 +456,10 @@ static void denver15pmu_disable_event(struct perf_event *event)
 	raw_spin_unlock_irqrestore(&events->pmu_lock, flags);
 }
 
-static irqreturn_t denver15pmu_handle_irq(int irq_num, void *dev)
+static irqreturn_t denver15pmu_handle_irq(struct arm_pmu *uncore_pmu)
 {
 	u32 pmovsr;
 	struct perf_sample_data data;
-	struct arm_pmu *uncore_pmu = (struct arm_pmu *)dev;
 	struct pmu_hw_events *cpuc = this_cpu_ptr(uncore_pmu->hw_events);
 	struct pt_regs *regs;
 	int idx;
@@ -624,13 +624,12 @@ static int denver15_uncore_pmu_init(struct arm_pmu *uncore_pmu)
 	uncore_pmu->handle_irq		= denver15pmu_handle_irq,
 	uncore_pmu->enable		= denver15pmu_enable_event,
 	uncore_pmu->disable		= denver15pmu_disable_event,
-	uncore_pmu->read_counter	= denver15pmu_read_counter,
-	uncore_pmu->write_counter	= denver15pmu_write_counter,
+	uncore_pmu->read_counter	= denver15pmu_read_counter_u64,
+	uncore_pmu->write_counter	= denver15pmu_write_counter_u64,
 	uncore_pmu->get_event_idx	= denver15pmu_get_event_idx,
 	uncore_pmu->start		= denver15pmu_start,
 	uncore_pmu->stop		= denver15pmu_stop,
 	uncore_pmu->reset		= denver15pmu_reset,
-	uncore_pmu->max_period		= (1LLU << 32) - 1,
 	uncore_pmu->set_event_filter	= denver15pmu_set_event_filter;
 	uncore_pmu->name		= "denver15_uncore_pmu";
 	uncore_pmu->map_event		= denver_pmu_map_event;

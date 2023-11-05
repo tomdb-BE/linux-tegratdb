@@ -447,7 +447,7 @@ static int nvhost_init_error_notifier(struct nvhost_channel_userctx *ctx,
 
 	/* map handle and clear error notifier struct */
 	ret  = dma_buf_vmap(dmabuf, va);
-	if (!ret) {
+	if (ret) {
 		dma_buf_put(dmabuf);
 		pr_err("%s: Cannot map notifier handle\n", __func__);
 		return -ENOMEM;

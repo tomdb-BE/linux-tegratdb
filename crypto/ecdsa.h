@@ -13,7 +13,7 @@
 #ifndef _CRYPTO_ECDSA_
 #define _CRYPTO_ECDSA_
 
-#include <crypto/ecc.h>
+#include "ecc.h"
 #include <crypto/akcipher.h>
 
 /**

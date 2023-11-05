@@ -54,6 +54,7 @@ $(obj)/ecdsasignature.asn1.o: $(obj)/ecdsasignature.asn1.c $(obj)/ecdsasignature
 $(obj)/ecdsa.o: $(obj)/ecdsasignature.asn1.h
 ecdsa_generic-y += ecdsa.o
 ecdsa_generic-y += ecdsasignature.asn1.o
+ecdsa_generic-y += ecdsa_helper.o
 obj-$(CONFIG_CRYPTO_ECDSA) += ecdsa_generic.o
 
 crypto_acompress-y := acompress.o

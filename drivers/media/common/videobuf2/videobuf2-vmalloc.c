@@ -373,7 +373,7 @@ static int vb2_vmalloc_map_dmabuf(void *mem_priv)
 {
 	struct vb2_vmalloc_buf *buf = mem_priv;
 	struct dma_buf_map map;
-	int ret;
+	int ret = 0;
 
 	ret = dma_buf_vmap(buf->dbuf, &map);
 	if (ret)

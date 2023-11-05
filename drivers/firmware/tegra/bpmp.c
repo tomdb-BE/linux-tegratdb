@@ -808,6 +808,45 @@ static const struct dev_pm_ops tegra_bpmp_pm_ops = {
 	.resume_noirq = tegra_bpmp_resume,
 };
 
+void *tegra_bpmp_alloc_coherent(size_t size, dma_addr_t *phys,
+                gfp_t flags)
+{
+        void *virt;
+
+        if (!device)
+                return NULL;
+
+        virt = dma_alloc_coherent(device, size, phys,
+                        flags);
+
+        virt = bpmp_get_virt_for_alloc(virt, *phys);
+
+        return virt;
+}
+EXPORT_SYMBOL(tegra_bpmp_alloc_coherent);
+
+static void *bpmp_get_virt_for_free(void *virt, dma_addr_t phys)
+{
+        if (hv_virt_base)
+                return (void *)(virt - hv_virt_base);
+
+        return virt;
+}
+
+void tegra_bpmp_free_coherent(size_t size, void *vaddr,
+                dma_addr_t phys)
+{
+        if (!device) {
+                pr_err("device not found\n");
+                return;
+        }
+
+        vaddr = bpmp_get_virt_for_free(vaddr, phys);
+
+        dma_free_coherent(device, size, vaddr, phys);
+}
+EXPORT_SYMBOL(tegra_bpmp_free_coherent);
+
 #if IS_ENABLED(CONFIG_ARCH_TEGRA_186_SOC) || \
     IS_ENABLED(CONFIG_ARCH_TEGRA_194_SOC) || \
     IS_ENABLED(CONFIG_ARCH_TEGRA_234_SOC)

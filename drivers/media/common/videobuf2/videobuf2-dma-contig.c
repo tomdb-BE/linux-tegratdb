@@ -77,7 +77,7 @@ static void *vb2_dc_vaddr(void *buf_priv)
 {
 	struct vb2_dc_buf *buf = buf_priv;
 	struct dma_buf_map map;
-	int ret;
+	int ret = 0;
 
 	if (!buf->vaddr && buf->db_attach) {
 		ret = dma_buf_vmap(buf->db_attach->dmabuf, &map);

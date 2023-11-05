@@ -17,9 +17,6 @@
 #ifndef __TEGRA_FD_H
 #define __TEGRA_FD_H
 
-extern int alloc_fd(struct files_struct *files, unsigned int start,
-                   unsigned int flags);
-
 int tegra_alloc_fd(struct files_struct *files, unsigned int start,
 		   unsigned int flags);
 

@@ -223,14 +223,14 @@ void nvhost_job_set_notifier(struct nvhost_job *job, u32 error)
 	struct timespec64 time_data;
 	void *va;
 	u64 nsec;
-	int ret;
+	int ret = 0;
 
 	if (!job->error_notifier_ref)
 		return;
 
 	/* map handle and clear error notifier struct */
 	ret = dma_buf_vmap(job->error_notifier_ref, va);
-	if (!ret) {
+	if (ret) {
 		dev_err(&job->ch->dev->dev, "Cannot map notifier handle\n");
 		return;
 	}
@@ -409,10 +409,10 @@ static int do_relocs(struct nvhost_job *job,
 	void *cmdbuf_base_addr = NULL;
 	dma_addr_t phys_addr;
 	int err;
-	int ret;
+	int ret = 0;
 
 	ret = dma_buf_vmap(buf, cmdbuf_base_addr);
-	if (!ret) {
+	if (ret) {
 		nvhost_err(&pdata->pdev->dev, "could not vmap cmdbuf");
 		return -ENOMEM;
 	}

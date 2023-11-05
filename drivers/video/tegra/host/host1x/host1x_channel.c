@@ -225,7 +225,7 @@ static void submit_work(struct nvhost_job *job)
 		pdata->resource_policy == RESOURCE_PER_CHANNEL_INSTANCE;
 	u32 cur_class = 0;
 	int i;
-	int ret;
+	int ret = 0;
 
 	/* make all waits in the beginning */
 	push_waits(job);

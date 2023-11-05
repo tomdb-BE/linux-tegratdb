@@ -21,11 +21,12 @@
 #include <linux/module.h>
 #include <linux/log2.h>
 #include <asm/page.h>
-#include <linux/panic_notifier.h>
 #include "trusty-log.h"
 
 #define TRUSTY_LOG_SIZE (PAGE_SIZE * 2)
 #define TRUSTY_LINE_BUFFER_SIZE 256
+
+extern struct atomic_notifier_head panic_notifier_list;
 
 /*
  * If we log too much and a UART or other slow source is connected, we can stall

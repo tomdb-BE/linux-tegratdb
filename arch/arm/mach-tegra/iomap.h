@@ -85,6 +85,22 @@
 #define TEGRA_CSITE_BASE		0x70040000
 #define TEGRA_CSITE_SIZE		SZ_256K
 
+#define TEGRA_T210_EMC_BASE             0x7001B000
+#define TEGRA_T210_EMC_SIZE             SZ_4K
+
+#define TEGRA_T210_EMC0_BASE            0x7001E000
+#define TEGRA_T210_EMC0_SIZE            SZ_4K
+
+#define TEGRA_T210_EMC1_BASE            0x7001F000
+#define TEGRA_T210_EMC1_SIZE            SZ_4K
+
+#define TEGRA124_EMC_BASE               0x7001B000
+#define TEGRA124_EMC_SIZE               SZ_2K
+
+#define TEGRA_CSITE_BASE                0x70040000
+#define TEGRA_CSITE_SIZE                SZ_256K
+
+
 /* On TEGRA, many peripherals are very closely packed in
  * two 256MB io windows (that actually only use about 64KB
  * at the start of each).

@@ -57,8 +57,7 @@ obj-$(CONFIG_DENVER_CPU) += denver-knobs.o
 endif
 obj-$(CONFIG_DENVER_MCA) += denver_mca.o
 obj-$(CONFIG_TEGRA_HV_XHCI_DEBUG) += tegra-hv-xhci-debug.o
-obj-$(CONFIG_TEGRA_SAFETY) += tegra-safety-ivc.o tegra-safety-dev.o
-obj-$(CONFIG_TEGRA_SAFETY) += tegra_l1ss_kernel_interface.o tegra_l1ss_cmd_resp_l2_interface.o tegra_l1ss.o
+obj-$(CONFIG_TEGRA_SAFETY) += tegra-safety-ivc.o tegra-safety-dev.o tegra_l1ss_kernel_interface.o tegra_l1ss_cmd_resp_l2_interface.o tegra_l1ss.o
 
 obj-$(CONFIG_TEGRA_NVADSP) += nvadsp/
 
@@ -69,10 +68,6 @@ obj-y += tegra_vpr_resize.o
 obj-y += smc-calls.o
 else
 obj-y += tegra_vpr.o
-endif
-
-ifeq ($(CONFIG_CPU_FREQ),y)
-obj-$(CONFIG_ARCH_TEGRA_21x_SOC) += cpu_emc.o
 endif
 
 ifdef CONFIG_ARCH_TEGRA_194_SOC
@@ -108,7 +103,7 @@ obj-$(CONFIG_TEGRA_BOOTLOADER_DEBUG_INIT) += tegra_bootloader_debug_init.o
 obj-$(CONFIG_TEGRA_BOOTLOADER_BOOT_CFG)	+= bcp.o
 
 obj-$(CONFIG_TEGRA_WDT_RECOVERY)        += wdt-recovery.o
-obj-y					+= tegra_prod.o
+obj-y					+= tegra_prod.o tegra-safety-build.o tegra-hv-mode.o
 obj-m 					+= bad.o
 obj-$(CONFIG_TEGRA_CLOCKS_CONFIGURE)	+= clocks-config.o
 obj-$(CONFIG_TEGRA_FSICOM)		+= tegra-fsicom.o

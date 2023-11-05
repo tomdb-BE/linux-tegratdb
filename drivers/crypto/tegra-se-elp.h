@@ -24,7 +24,6 @@
 #define ECC_CURVE_NIST_P384		0x0003
 #define ECC_CURVE_NIST_P521		0x0004
 #define C25519_CURVE_C256		0x0005
-#define ECC_CURVE_BRAINPOOL_P256	0x0006
 #define ED25519_CURVE_P256		0x0007
 
 /* Security Engine operation modes */

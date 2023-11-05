@@ -67,7 +67,7 @@ static void show_channel_gathers(struct output *o, struct nvhost_cdma *cdma)
 {
 	struct nvhost_job *job;
 	int i;
-	int ret;
+	int ret = 0;
 
 	mutex_lock(&cdma->sync_queue_lock);
 	if (list_empty(&cdma->sync_queue)) {
@@ -103,7 +103,7 @@ static void show_channel_gathers(struct output *o, struct nvhost_cdma *cdma)
 		}
 
 		ret = dma_buf_vmap(g->buf, mapped);
-		if (!ret) {
+		if (ret) {
 			nvhost_debug_output(o, "[could not mmap]\n");
 			continue;
 		}

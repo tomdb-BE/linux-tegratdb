@@ -18,8 +18,6 @@
 #define TEGRA_CSICIL_CLK_MHZ 102
 
 extern const struct tegra_csi_fops csi2_fops;
-extern void tegra210_csi_source_from_plld(void);
-extern void tegra210_csi_source_from_brick(void);
 
 #if defined(CONFIG_ARCH_TEGRA_210_SOC)
 static inline void csi_source_from_plld(void)

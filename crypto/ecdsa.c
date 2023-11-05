@@ -9,8 +9,7 @@
 #include <crypto/ecdh.h>
 #include <linux/asn1_decoder.h>
 #include <linux/scatterlist.h>
-#include <crypto/ecc.h>
-
+#include "ecc.h"
 #include "ecdsasignature.asn1.h"
 
 struct ecc_ctx {

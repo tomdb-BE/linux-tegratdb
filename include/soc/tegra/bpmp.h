@@ -113,6 +113,10 @@ int tegra_bpmp_transfer_atomic(struct tegra_bpmp *bpmp,
 			       struct tegra_bpmp_message *msg);
 int tegra_bpmp_transfer(struct tegra_bpmp *bpmp,
 			struct tegra_bpmp_message *msg);
+int tegra_bpmp_send_receive_atomic(int mrq, void *ob_data, int ob_sz,
+                void *ib_data, int ib_sz);
+int tegra_bpmp_send_receive(int mrq, void *ob_data, int ob_sz,
+                void *ib_data, int ib_sz);
 void tegra_bpmp_mrq_return(struct tegra_bpmp_channel *channel, int code,
 			   const void *data, size_t size);
 
@@ -121,6 +125,10 @@ int tegra_bpmp_request_mrq(struct tegra_bpmp *bpmp, unsigned int mrq,
 void tegra_bpmp_free_mrq(struct tegra_bpmp *bpmp, unsigned int mrq,
 			 void *data);
 bool tegra_bpmp_mrq_is_supported(struct tegra_bpmp *bpmp, unsigned int mrq);
+void *tegra_bpmp_alloc_coherent(size_t size, dma_addr_t *phys,
+                gfp_t flags);
+void tegra_bpmp_free_coherent(size_t size, void *vaddr,
+                dma_addr_t phys);
 #else
 static inline struct tegra_bpmp *tegra_bpmp_get(struct device *dev)
 {
@@ -139,6 +147,10 @@ static inline int tegra_bpmp_transfer(struct tegra_bpmp *bpmp,
 {
 	return -ENOTSUPP;
 }
+static inline int tegra_bpmp_send_receive_atomic(int mrq, void *ob_data,
+                int ob_sz, void *ib_data, int ib_sz) { return -ENODEV; }
+static inline int tegra_bpmp_send_receive(int mrq, void *ob_data, int ob_sz,
+                void *ib_data, int ib_sz) { return -ENODEV; }
 static inline void tegra_bpmp_mrq_return(struct tegra_bpmp_channel *channel,
 					 int code, const void *data,
 					 size_t size)
@@ -162,6 +174,10 @@ static inline bool tegra_bpmp_mrq_is_supported(struct tegra_bpmp *bpmp,
 {
 	return false;
 }
+static inline void *tegra_bpmp_alloc_coherent(size_t size, dma_addr_t *phys,
+                gfp_t flags) { return NULL; }
+static inline void tegra_bpmp_free_coherent(size_t size, void *vaddr,
+                dma_addr_t phys) { }
 #endif
 
 void tegra_bpmp_handle_rx(struct tegra_bpmp *bpmp);

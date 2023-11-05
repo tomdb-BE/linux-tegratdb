@@ -626,6 +626,46 @@ void tegra210_clk_emc_update_setting(u32 emc_src_value)
 }
 EXPORT_SYMBOL_GPL(tegra210_clk_emc_update_setting);
 
+void tegra210_csi_source_from_brick(void)
+{
+        u32 val;
+        unsigned long flags = 0;
+        struct clk *plld = clks[TEGRA210_CLK_PLL_D];
+
+        if (!IS_ERR_OR_NULL(plld))
+                spin_lock_irqsave(to_clk_pll(__clk_get_hw(plld))->lock, flags);
+
+        val = readl_relaxed(clk_base + PLLD_BASE);
+        val &= ~PLLD_BASE_CSI_CLKSOURCE;
+        writel_relaxed(val, clk_base + PLLD_BASE);
+        fence_udelay(1, clk_base);
+
+        if (!IS_ERR_OR_NULL(plld))
+                spin_unlock_irqrestore(to_clk_pll(__clk_get_hw(plld))->lock,
+                                       flags);
+}
+EXPORT_SYMBOL_GPL(tegra210_csi_source_from_brick);
+
+void tegra210_csi_source_from_plld(void)
+{
+        u32 val;
+        unsigned long flags = 0;
+        struct clk *plld = clks[TEGRA210_CLK_PLL_D];
+
+        if (!IS_ERR_OR_NULL(plld))
+                spin_lock_irqsave(to_clk_pll(__clk_get_hw(plld))->lock, flags);
+
+        val = readl_relaxed(clk_base + PLLD_BASE);
+        val |= PLLD_BASE_CSI_CLKSOURCE;
+        writel_relaxed(val, clk_base + PLLD_BASE);
+        fence_udelay(1, clk_base);
+
+        if (!IS_ERR_OR_NULL(plld))
+                spin_unlock_irqrestore(to_clk_pll(__clk_get_hw(plld))->lock,
+                                       flags);
+}
+EXPORT_SYMBOL_GPL(tegra210_csi_source_from_plld);
+
 static void tegra210_generic_mbist_war(struct tegra210_domain_mbist_war *mbist)
 {
 	u32 val;

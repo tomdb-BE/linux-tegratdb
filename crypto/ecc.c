@@ -35,7 +35,7 @@
 #include <asm/unaligned.h>
 #include <linux/ratelimit.h>
 
-#include <crypto/ecc.h>
+#include "ecc.h"
 #include "ecc_curve_defs.h"
 
 typedef struct {

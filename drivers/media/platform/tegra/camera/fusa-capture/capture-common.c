@@ -499,6 +499,7 @@ int capture_common_setup_progress_status_notifier(
 {
 	struct dma_buf *dmabuf;
 	void *va;
+	int ret = 0;
 
 	/* take reference for the userctx */
 	dmabuf = dma_buf_get(mem);
@@ -517,8 +518,8 @@ int capture_common_setup_progress_status_notifier(
 	}
 
 	/* map handle and clear error notifier struct */
-	va = dma_buf_vmap(dmabuf);
-	if (!va) {
+	ret = dma_buf_vmap(dmabuf, va);
+	if (ret) {
 		dma_buf_put(dmabuf);
 		pr_err("%s: Cannot map notifier handle\n", __func__);
 		return -ENOMEM;
@@ -611,9 +612,9 @@ int capture_common_pin_memory(
 	if (sg_dma_address(sgt->sgl) == 0)
 		sg_dma_address(sgt->sgl) = sg_phys(sgt->sgl);
 
-	unpin_data->va = dma_buf_vmap(buf);
+	err = dma_buf_vmap(buf, unpin_data->va);
 
-	if (unpin_data->va == NULL) {
+	if (err) {
 		pr_err("%s: failed to map pinned memory\n", __func__);
 		goto fail;
 	}

@@ -296,7 +296,7 @@ static void *vb2_dma_sg_vaddr(void *buf_priv)
 {
 	struct vb2_dma_sg_buf *buf = buf_priv;
 	struct dma_buf_map map;
-	int ret;
+	int ret = 0;
 
 	BUG_ON(!buf);
 

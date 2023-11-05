@@ -82,7 +82,7 @@ static int tegra_hwpm_dma_map_mem_bytes_buffer(struct tegra_soc_hwpm *hwpm,
 	}
 
 	ret = dma_buf_vmap(hwpm->mem_bytes_dma_buf, hwpm->mem_bytes_kernel);
-	if (!ret) {
+	if (ret) {
 		tegra_hwpm_err(hwpm,
 			"Unable to map mem_bytes buffer into kernel VA space");
 		return -ENOMEM;

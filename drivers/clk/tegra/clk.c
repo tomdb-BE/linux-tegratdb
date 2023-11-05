@@ -19,6 +19,7 @@
 /* Global data of Tegra CPU CAR ops */
 static struct tegra_cpu_car_ops dummy_car_ops;
 struct tegra_cpu_car_ops *tegra_cpu_car_ops = &dummy_car_ops;
+bool div1_5_not_allowed;
 
 int *periph_clk_enb_refcnt;
 static int periph_banks;

@@ -91,6 +91,8 @@ extern int *periph_clk_enb_refcnt;
 struct clk *tegra_clk_register_sync_source(const char *name,
 					   unsigned long max_rate);
 
+extern bool div1_5_not_allowed;
+
 /**
  * struct tegra_clk_frac_div - fractional divider clock
  *

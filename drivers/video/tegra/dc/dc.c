@@ -7661,7 +7661,7 @@ static void tegra_dc_collect_latency_data(struct tegra_dc *dc)
 	}
 
 	ret = dma_buf_vmap(handle, ptr);
-	if (!ret) {
+	if (ret) {
 		dev_err(&dc->ndev->dev, "dma_buf_vmap failed\n");
 		dma_buf_end_cpu_access(handle,
 #if KERNEL_VERSION(5, 4, 0) > LINUX_VERSION_CODE

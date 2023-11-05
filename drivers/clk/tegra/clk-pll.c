@@ -1217,6 +1217,21 @@ static int _pll_fixed_mdiv(struct tegra_clk_pll_params *pll_params,
 		return 1;
 }
 
+unsigned long
+tegra_pll_adjust_vco_min_sdm(struct tegra_clk_pll_params *pll_params,
+                             unsigned long parent_rate, u32 sdm_coeff)
+{
+        unsigned long vco_min_sdm, vco_min_int;
+        unsigned long vco_min = pll_params->vco_min;
+
+        parent_rate = parent_rate / _pll_fixed_mdiv(pll_params, parent_rate);
+
+        vco_min_int = DIV_ROUND_UP(vco_min, parent_rate) * parent_rate;
+        vco_min_sdm = vco_min + DIV_ROUND_UP(parent_rate, sdm_coeff);
+
+        return min(vco_min_int, vco_min_sdm);
+}
+
 static int _calc_dynamic_ramp_rate(struct clk_hw *hw,
 				struct tegra_clk_pll_freq_table *cfg,
 				unsigned long rate, unsigned long parent_rate)

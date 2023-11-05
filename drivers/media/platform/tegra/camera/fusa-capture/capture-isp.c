@@ -26,6 +26,7 @@
 #include <linux/tegra-capture-ivc.h>
 #include <asm/arch_timer.h>
 #include <linux/version.h>
+#include <linux/arm64-barrier.h>
 #if KERNEL_VERSION(4, 15, 0) > LINUX_VERSION_CODE
 #include <soc/tegra/chip-id.h>
 #else
@@ -395,8 +396,8 @@ static int isp_capture_setup_inputfences(
 	}
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 4, 0)
-	vmap_base = dma_buf_vmap(capture->capture_desc_ctx.requests.buf);
-	if (!vmap_base) {
+	err = dma_buf_vmap(capture->capture_desc_ctx.requests.buf, vmap_base);
+	if (err) {
 		pr_err("%s: Cannot map capture descriptor request\n", __func__);
 		err = -ENOMEM;
 		goto fail;
@@ -478,8 +479,8 @@ static int isp_capture_setup_prefences(
 	}
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 4, 0)
-	vmap_base = dma_buf_vmap(capture->capture_desc_ctx.requests.buf);
-	if (!vmap_base) {
+	err = dma_buf_vmap(capture->capture_desc_ctx.requests.buf, vmap_base);
+	if (err) {
 		pr_err("%s: Cannot map capture descriptor request\n", __func__);
 		err = -ENOMEM;
 		goto fail;

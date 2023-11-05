@@ -95,7 +95,7 @@ static void show_channel_gathers(struct output *o, struct nvhost_cdma *cdma)
 	for (i = 0; i < job->num_gathers; i++) {
 		struct nvhost_job_gather *g = &job->gathers[i];
 	        ret = dma_buf_vmap(g->buf, mapped);
-		if (!ret) {
+		if (ret) {
 			nvhost_debug_output(o, "[could not mmap]\n");
 			continue;
 		}

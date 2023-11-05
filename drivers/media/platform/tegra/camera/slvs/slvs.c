@@ -18,6 +18,7 @@
 #include <linux/of_graph.h>
 #include <linux/of_platform.h>
 #include <linux/platform_device.h>
+#include <linux/arm64-barrier.h>
 
 #include <media/media-entity.h>
 #include <media/v4l2-async.h>
