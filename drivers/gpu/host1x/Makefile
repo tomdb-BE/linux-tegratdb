@@ -1,11 +1,12 @@
 # SPDX-License-Identifier: GPL-2.0
-host1x-y = \
+#
+obj-y = \
 	bus.o \
 	syncpt.o \
-	dev.o \
 	intr.o \
 	cdma.o \
 	channel.o \
+	dev.o \
 	job.o \
 	debug.o \
 	mipi.o \

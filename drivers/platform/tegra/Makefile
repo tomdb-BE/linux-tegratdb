@@ -77,7 +77,6 @@ endif
 obj-$(CONFIG_TEGRA_CACHE) += cache/
 ifdef CONFIG_ARCH_TEGRA_19x_SOC
 obj-y += cvnas/
-obj-$(CONFIG_TEGRA_19X_RAS) += carmel_ras.o
 ifeq ($(CONFIG_HW_PERF_EVENTS), y)
 obj-$(CONFIG_ARCH_TEGRA_19x_SOC) += tegra19_perf_uncore.o
 endif

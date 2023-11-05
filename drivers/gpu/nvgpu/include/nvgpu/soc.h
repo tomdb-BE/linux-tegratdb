@@ -26,7 +26,7 @@
 
 struct gk20a;
 
-#ifdef CONFIG_NVGPU_TEGRA_FUSE
+#ifdef NVGPU_SOC_H
 /**
  * @brief Check whether running on silicon or not.
  *

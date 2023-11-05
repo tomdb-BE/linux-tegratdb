@@ -30,6 +30,7 @@ static DEFINE_RAW_SPINLOCK(corecluster_ras_lock);
 static LIST_HEAD(ccplex_ras_list);
 static DEFINE_RAW_SPINLOCK(ccplex_ras_lock);
 
+struct serr_hook;
 static struct dentry *debugfs_dir;
 static struct dentry *debugfs_node;
 static int is_debug;
@@ -371,7 +372,7 @@ static struct tegra_ras_impl_err_bit t194_ras_impl_err_bit[] = {
 static void carmel_ras_enable(void *info)
 {
 	u64 errx;
-	u64 err_ctlr_def;
+	u64 err_ctrl_def;
 	int i;
 	u8 cpu = smp_processor_id();
 
@@ -387,10 +388,10 @@ static void carmel_ras_enable(void *info)
 			core_ers[i].rec.errx;
 		ras_write_errselr(errx);
 
-		err_ctlr_def = ras_read_error_control();
-		core_ers[i].rec.err_ctlr =
-				err_ctlr_def & core_ers[i].err_ctlr_mask;
-		ras_write_error_control(core_ers[i].rec.err_ctlr);
+		err_ctrl_def = ras_read_error_control();
+		core_ers[i].rec.err_ctrl =
+				err_ctrl_def & core_ers[i].err_ctlr_mask;
+		ras_write_error_control(core_ers[i].rec.err_ctrl);
 		ras_read_error_control();
 	}
 
@@ -400,10 +401,10 @@ static void carmel_ras_enable(void *info)
 		       corecluster_ers[i].rec.errx;
 		ras_write_errselr(errx);
 
-		err_ctlr_def = ras_read_error_control();
-		corecluster_ers[i].rec.err_ctlr = err_ctlr_def &
+		err_ctrl_def = ras_read_error_control();
+		corecluster_ers[i].rec.err_ctrl = err_ctrl_def &
 				corecluster_ers[i].err_ctlr_mask;
-		ras_write_error_control(corecluster_ers[i].rec.err_ctlr);
+		ras_write_error_control(corecluster_ers[i].rec.err_ctrl);
 		ras_read_error_control();
 	}
 
@@ -411,10 +412,10 @@ static void carmel_ras_enable(void *info)
 	for (i = 0; strlen(ccplex_ers[i].rec.name) != 0UL; i++) {
 		ras_write_errselr(ccplex_ers[i].rec.errx);
 
-		err_ctlr_def = ras_read_error_control();
-		ccplex_ers[i].rec.err_ctlr =
-			err_ctlr_def & ccplex_ers[i].err_ctlr_mask;
-		ras_write_error_control(ccplex_ers[i].rec.err_ctlr);
+		err_ctrl_def = ras_read_error_control();
+		ccplex_ers[i].rec.err_ctrl =
+			err_ctrl_def & ccplex_ers[i].err_ctlr_mask;
+		ras_write_error_control(ccplex_ers[i].rec.err_ctrl);
 		ras_read_error_control();
 	}
 
