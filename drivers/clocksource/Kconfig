@@ -89,6 +89,9 @@ config CLK_SRC_TEGRA18_TIMER
         help
           This is the tegra18 SOC timer driver.
 
+config TEGRA210_TIMER
+        def_bool ARCH_TEGRA_210_SOC
+
 config ROCKCHIP_TIMER
 	bool "Rockchip timer driver" if COMPILE_TEST
 	depends on ARM || ARM64
